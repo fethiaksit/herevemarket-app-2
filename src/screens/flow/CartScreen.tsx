@@ -5,6 +5,7 @@ import { styles } from "../styles";
 import { formatPrice } from "../../utils/cartPrice";
 import { CartLineItem, Product } from "../../types/home";
 import { THEME } from "../../constants/theme";
+import { buildImageUrl } from "../../utils/buildImageUrl";
 
 export default function CartScreen({
   cartDetails,
@@ -51,54 +52,59 @@ export default function CartScreen({
           </View>
         ) : (
           <View style={styles.cartListContainer}>
-            {cartDetails.map((item) => (
-              <View key={item.product.id} style={styles.cartItemCard}>
-                <Image
-                  source={item.product.image ? { uri: item.product.image } : placeholderImage}
-                  style={styles.cartItemImage}
-                />
-                <View style={styles.cartItemInfo}>
-                  <Text style={styles.cartItemName} numberOfLines={2}>
-                    {item.product.name}
-                  </Text>
-                  <Text style={styles.cartItemSinglePrice}>
-                    {formatPrice(item.product.price)}
-                  </Text>
-                </View>
-                
-                <View style={styles.cartItemActions}>
-                  <View style={styles.quantityControlSmall}>
-                    <TouchableOpacity
-                      style={styles.qtyBtnSmall}
-                      onPress={() => onDecrease(item.product.id)}
-                    >
-                      <Text style={styles.qtyBtnTextSmall}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.qtyTextSmall}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      style={[
-                        styles.qtyBtnSmall,
-                        isOutOfStock(item.product) && styles.qtyBtnSmallDisabled,
-                      ]}
-                      onPress={() => onIncrease(item.product.id)}
-                      disabled={isOutOfStock(item.product)}
-                    >
-                      <Text
-                        style={[
-                          styles.qtyBtnTextSmall,
-                          isOutOfStock(item.product) && styles.qtyBtnTextSmallDisabled,
-                        ]}
-                      >
-                        +
-                      </Text>
-                    </TouchableOpacity>
+            {cartDetails.map((item) => {
+              const imageUrl = item.product.imagePath
+                ? buildImageUrl(item.product.imagePath)
+                : item.product.image ?? "";
+              return (
+                <View key={item.product.id} style={styles.cartItemCard}>
+                  <Image
+                    source={imageUrl ? { uri: imageUrl } : placeholderImage}
+                    style={styles.cartItemImage}
+                  />
+                  <View style={styles.cartItemInfo}>
+                    <Text style={styles.cartItemName} numberOfLines={2}>
+                      {item.product.name}
+                    </Text>
+                    <Text style={styles.cartItemSinglePrice}>
+                      {formatPrice(item.product.price)}
+                    </Text>
                   </View>
-                  <Text style={styles.cartItemTotalPrice}>
-                    {formatPrice(item.product.price * item.quantity)}
-                  </Text>
+                  
+                  <View style={styles.cartItemActions}>
+                    <View style={styles.quantityControlSmall}>
+                      <TouchableOpacity
+                        style={styles.qtyBtnSmall}
+                        onPress={() => onDecrease(item.product.id)}
+                      >
+                        <Text style={styles.qtyBtnTextSmall}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.qtyTextSmall}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.qtyBtnSmall,
+                          isOutOfStock(item.product) && styles.qtyBtnSmallDisabled,
+                        ]}
+                        onPress={() => onIncrease(item.product.id)}
+                        disabled={isOutOfStock(item.product)}
+                      >
+                        <Text
+                          style={[
+                            styles.qtyBtnTextSmall,
+                            isOutOfStock(item.product) && styles.qtyBtnTextSmallDisabled,
+                          ]}
+                        >
+                          +
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.cartItemTotalPrice}>
+                      {formatPrice(item.product.price * item.quantity)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>

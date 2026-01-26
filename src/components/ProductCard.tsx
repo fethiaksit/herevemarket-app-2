@@ -1,6 +1,7 @@
 import React from "react";
 import { Image, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { Product } from "../types";
+import { buildImageUrl } from "../utils/buildImageUrl";
 
 type Props = {
   product: Product;
@@ -25,11 +26,12 @@ export const ProductCard: React.FC<Props> = ({
 }) => {
   const isOutOfStock = !product.inStock || product.stock === 0;
   const cardStyles = [styles.card, isOutOfStock && styles.cardDisabled, containerStyle];
+  const imageUrl = product.imagePath ? buildImageUrl(product.imagePath) : product.image ?? "";
 
   const content = (
     <>
-      {showImage && product.image ? (
-        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+      {showImage && imageUrl ? (
+        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
       ) : null}
       <View style={styles.top}>
         <Text style={styles.title}>{product.name}</Text>
