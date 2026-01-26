@@ -21,6 +21,7 @@ import { ProductDetailScreen } from "./ProductDetailScreen";
 // --- MOCK / CONSTANTS & TYPES ---
 import { useCart } from "../hooks/useCart"; 
 import { formatPrice } from "../utils/cartPrice"; 
+import { buildImageUrl } from "../utils/buildImageUrl";
 import { getProducts } from "../services/api/products"; 
 import { getCategories, CategoryDto } from "../services/api/categories"; 
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
@@ -273,6 +274,7 @@ export default function HomePage() {
   const renderProductCard = (urun: Product) => {
     const qty = getQuantity(urun.id);
     const outOfStock = isOutOfStock(urun);
+    const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
     return (
       <TouchableOpacity 
         key={urun.id} 
@@ -281,7 +283,7 @@ export default function HomePage() {
         activeOpacity={0.9}
       >
         <View style={styles.productImageContainer}>
-          <Image source={urun.image ? { uri: urun.image } : placeholderImage} style={styles.productImage} />
+          <Image source={imageUrl ? { uri: imageUrl } : placeholderImage} style={styles.productImage} />
         </View>
         <View style={styles.productInfoContainer}>
           <Text style={styles.productName} numberOfLines={2}>{urun.name}</Text>

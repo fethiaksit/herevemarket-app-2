@@ -15,6 +15,7 @@ import {
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../utils/cartPrice";
+import { buildImageUrl } from "../utils/buildImageUrl";
 import { RootStackParamList } from "../navigation/types";
 import { styles } from "../styles/home.styles";
 import { ProductDto } from "../services/api/products";
@@ -77,6 +78,7 @@ export default function CategoryProductsScreen() {
           {filteredProducts.map((urun: ProductDto) => {
             const quantity = getQuantity(urun.id);
             const outOfStock = !urun.inStock || urun.stock === 0;
+            const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
 
             return (
               <View
@@ -84,7 +86,7 @@ export default function CategoryProductsScreen() {
                 style={[styles.productCard, outOfStock && styles.productCardDisabled]}
               >
                 <Image
-                  source={urun.image ? { uri: urun.image } : placeholderImage}
+                  source={imageUrl ? { uri: imageUrl } : placeholderImage}
                   style={styles.productImage}
                 />
 

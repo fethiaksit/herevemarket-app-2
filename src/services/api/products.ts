@@ -9,6 +9,7 @@ type RawProduct = {
   barcode?: string;
   stock?: number | string;
   inStock?: boolean;
+  imagePath?: string;
   image?: string;
   imageUrl?: string;
   category?: string | string[];
@@ -39,6 +40,7 @@ export type ProductDto = {
   barcode?: string;
   stock: number;
   inStock: boolean;
+  imagePath?: string;
   image?: string;
   imageUrl?: string;
   category: string[];
@@ -97,6 +99,7 @@ export async function getProducts() {
         barcode: item.barcode,
         stock,
         inStock,
+        imagePath: item.imagePath,
         image: item.image ?? item.imageUrl,
         description: item.description,
         category: Array.isArray(item.category)

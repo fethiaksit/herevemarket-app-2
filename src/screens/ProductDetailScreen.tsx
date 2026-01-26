@@ -8,12 +8,14 @@ import {
   View, 
   SafeAreaView 
 } from "react-native";
+import { buildImageUrl } from "../utils/buildImageUrl";
 
 // Ana dosyadaki Type ile uyumlu olması için
 export interface Product {
   id: string;
   name: string;
   price: number;
+  imagePath?: string;
   image?: string;
   brand?: string;
   barcode?: string;
@@ -56,6 +58,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
     product.description && product.description.trim().length > 0
       ? product.description
       : "Bu ürün için açıklama bulunmamaktadır.";
+  const imageUrl = product.imagePath ? buildImageUrl(product.imagePath) : product.image ?? "";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -72,8 +75,8 @@ export const ProductDetailScreen: React.FC<Props> = ({
         
         {/* Ürün Görseli */}
         <View style={styles.imageContainer}>
-          {product.image ? (
-            <Image source={{ uri: product.image }} style={styles.image} resizeMode="contain" />
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />
           ) : (
             <View style={[styles.image, { backgroundColor: '#eee' }]} />
           )}

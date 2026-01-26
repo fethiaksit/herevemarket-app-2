@@ -14,6 +14,7 @@ export type Product = {
   inStock: boolean;
   isCampaign?: boolean;
   categoryId?: string;
+  imagePath?: string;
   image?: string;
   description?: string;
   category?: string;
