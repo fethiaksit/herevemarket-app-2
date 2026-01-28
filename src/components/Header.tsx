@@ -33,6 +33,7 @@ export const Header: React.FC<Props> = ({ cartCount, onCartPress, onAddressPress
               <Text style={styles.badgeText}>{cartCount}</Text>
             </View>
           )}
+
         </TouchableOpacity>
       </View>
     </View>

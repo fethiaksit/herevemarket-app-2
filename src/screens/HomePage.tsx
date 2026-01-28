@@ -16,17 +16,19 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 // --- IMPORT ---
-import { ProductDetailScreen } from "./ProductDetailScreen"; 
+import { ProductDetailScreen } from "./ProductDetailScreen";
 
-// --- MOCK / CONSTANTS & TYPES ---
-import { useCart } from "../hooks/useCart"; 
-import { formatPrice } from "../utils/cartPrice"; 
+// --- HOOKS / UTILS / API ---
+import { useCart } from "../hooks/useCart";
+import { formatPrice } from "../utils/cartPrice";
 import { buildImageUrl } from "../utils/buildImageUrl";
-import { getProducts } from "../services/api/products"; 
-import { getCategories, CategoryDto } from "../services/api/categories"; 
+import { getProducts } from "../services/api/products";
+import { getCategories, CategoryDto } from "../services/api/categories";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
+
+// --- TYPES / STYLES / CONSTANTS ---
 import { Address, OrderPayload } from "../types";
 import { styles } from "./styles";
 import { THEME } from "../constants/theme";
@@ -43,6 +45,8 @@ import {
 } from "../constants/mockData";
 import { LEGAL_URLS } from "../constants/legalUrls";
 import { CartLineItem, LegalUrlKey, OrderItemPayload, PaymentMethod, Product, Screen } from "../types/home";
+
+// --- SCREENS ---
 import CartScreen from "./flow/CartScreen";
 import AddressScreen from "./flow/AddressScreen";
 import GuestAddressScreen from "./flow/GuestAddressScreen";
@@ -51,6 +55,8 @@ import AddAddressScreen from "./flow/AddAddressScreen";
 import AddCardScreen from "./flow/AddCardScreen";
 import SummaryScreen from "./flow/SummaryScreen";
 import SuccessScreen from "./flow/SuccessScreen";
+
+// --- HOME COMPONENTS ---
 import HomeHeader from "./home/HomeHeader";
 import HomeSlider from "./home/HomeSlider";
 import BrandScroller from "./home/BrandScroller";
@@ -78,20 +84,22 @@ const buildOrderPayload = (
   };
 };
 
-// --- MAIN HOMEPAGE COMPONENT ---
-
 export default function HomePage() {
   const navigation = useNavigation<any>();
   const { token, isGuest, logout } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
+
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(CAMPAIGN_CATEGORY_ID);
-  
+
+  // ✅ Arama state
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Detay sayfası state'leri
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [previousScreen, setPreviousScreen] = useState<Screen>('home'); 
+  const [previousScreen, setPreviousScreen] = useState<Screen>("home");
 
   // Diğer State'ler
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
@@ -103,23 +111,28 @@ export default function HomePage() {
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
+
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
   const categoryListRef = useRef<ScrollView | null>(null);
   const productListRef = useRef<ScrollView | null>(null);
   const productListOffset = useRef(0);
+
   const { width } = Dimensions.get("window");
   const slideWidth = width - 32;
 
-  // Veri Çekme
+  // Veri Çekme (Products)
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         const data = await getProducts();
         setProducts(data && data.length ? data : fallbackProducts);
-      } catch { setProducts(fallbackProducts); }
-      finally { setLoading(false); }
+      } catch {
+        setProducts(fallbackProducts);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -132,7 +145,6 @@ export default function HomePage() {
     setAddressesLoading(true);
     try {
       const data = await getAddresses(token);
-      // Ensure data is an array
       const safeData = Array.isArray(data) ? data : [];
       setAddresses(safeData);
       const defaultAddress = safeData.find((address) => address.isDefault) ?? safeData[0];
@@ -146,9 +158,7 @@ export default function HomePage() {
   }, [token]);
 
   useEffect(() => {
-    if (token && activeScreen === "address") {
-      loadAddresses();
-    }
+    if (token && activeScreen === "address") loadAddresses();
   }, [activeScreen, loadAddresses, token]);
 
   useEffect(() => {
@@ -158,22 +168,27 @@ export default function HomePage() {
     }
   }, [isGuest]);
 
+  // Categories
   useEffect(() => {
     (async () => {
       try {
         setCategoriesLoading(true);
         const data = await getCategories();
-        const active = (data || []).filter(c => c.isActive);
+        const active = (data || []).filter((c) => c.isActive);
         setCategories(ensureCampaignCategory(active.length ? active : fallbackCategories));
-      } catch { setCategories(ensureCampaignCategory(fallbackCategories)); }
-      finally { setCategoriesLoading(false); }
+      } catch {
+        setCategories(ensureCampaignCategory(fallbackCategories));
+      } finally {
+        setCategoriesLoading(false);
+      }
     })();
   }, []);
 
   useEffect(() => {
     if (!selectedCategoryId && categories.length) setSelectedCategoryId(CAMPAIGN_CATEGORY_ID);
-  }, [categories]);
+  }, [categories, selectedCategoryId]);
 
+  // Slider auto-advance
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveDealIndex((prev) => {
@@ -186,20 +201,59 @@ export default function HomePage() {
   }, [slideWidth]);
 
   // Filtreleme
-  const selectedCategory = useMemo(() => categories.find((c) => c.id === selectedCategoryId), [categories, selectedCategoryId]);
-  const campaignProducts = useMemo(() => products.filter((product) => product.isCampaign && product.inStock && product.stock > 0), [products]);
+  const selectedCategory = useMemo(
+    () => categories.find((c) => String(c.id) === String(selectedCategoryId)),
+    [categories, selectedCategoryId]
+  );
+
+  const campaignProducts = useMemo(
+    () => products.filter((product) => product.isCampaign && product.inStock && product.stock > 0),
+    [products]
+  );
+
   const selectedCategoryProducts = useMemo(() => {
     if (!selectedCategoryId) return [];
     if (selectedCategoryId === CAMPAIGN_CATEGORY_ID) return campaignProducts;
+
     return products.filter((product) => {
       const productCategoryIds = [...(product.category || []), ...(product.categoryIds || [])].map(String);
-      return productCategoryIds.includes(selectedCategoryId) || (selectedCategory && productCategoryIds.includes(selectedCategory.name));
+      return (
+        productCategoryIds.includes(String(selectedCategoryId)) ||
+        (selectedCategory && productCategoryIds.includes(String(selectedCategory.name)))
+      );
     });
   }, [products, selectedCategoryId, selectedCategory, campaignProducts]);
 
   const isCategoryScreen = activeScreen === "category";
-  
-  // Swipe
+
+  // ✅ Arama yoksa: mevcut ekran mantığı (kampanya / kategori)
+  // ✅ Arama varsa: TÜM ürünlerde arama
+  const displayProductsBase = isCategoryScreen ? selectedCategoryProducts : campaignProducts;
+
+  const displayProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return displayProductsBase;
+
+    const categoryNameById = new Map<string, string>();
+    categories.forEach((c) => categoryNameById.set(String(c.id), (c.name || "").toLowerCase()));
+
+    return products.filter((p) => {
+      const name = (p.name || "").toLowerCase();
+      const brand = (p.brand || "").toLowerCase();
+      const desc = (p.description || "").toLowerCase();
+
+      const rawCats = [...(p.category || []), ...(p.categoryIds || [])].map(String);
+      const catNames = rawCats
+        .map((x) => categoryNameById.get(x) || x.toLowerCase())
+        .join(" ");
+
+      return name.includes(q) || brand.includes(q) || desc.includes(q) || catNames.includes(q);
+    });
+  }, [searchQuery, displayProductsBase, products, categories]);
+
+  const pageTitle = isCategoryScreen ? (selectedCategory?.name || "Ürünler") : "Kampanyalı Fırsatlar";
+
+  // Swipe (arama varken swipe input'a dokunmayı çalmasın)
   const swipeResponder = useMemo(
     () =>
       PanResponder.create({
@@ -208,23 +262,26 @@ export default function HomePage() {
         onPanResponderEnd: (_, gestureState) => {
           const { dx } = gestureState;
           if (Math.abs(dx) > 50) {
-            const currentIndex = categories.findIndex((c) => c.id === selectedCategoryId);
+            const currentIndex = categories.findIndex((c) => String(c.id) === String(selectedCategoryId));
             if (currentIndex < 0) return;
+
             if (dx > 0 && currentIndex > 0) {
               const prevCat = categories[currentIndex - 1];
-              setSelectedCategoryId(prevCat.id);
+              setSelectedCategoryId(String(prevCat.id));
+              setSearchQuery("");
               if (!isCategoryScreen) setActiveScreen("category");
               categoryListRef.current?.scrollTo({ x: (currentIndex - 1) * 100, animated: true });
             } else if (dx < 0 && currentIndex < categories.length - 1) {
               const nextCat = categories[currentIndex + 1];
-              setSelectedCategoryId(nextCat.id);
+              setSelectedCategoryId(String(nextCat.id));
+              setSearchQuery("");
               if (!isCategoryScreen) setActiveScreen("category");
               categoryListRef.current?.scrollTo({ x: (currentIndex + 1) * 100, animated: true });
             }
           }
         },
       }),
-    [categories, selectedCategoryId, isCategoryScreen, setActiveScreen, setSelectedCategoryId]
+    [categories, selectedCategoryId, isCategoryScreen]
   );
 
   useEffect(() => {
@@ -236,28 +293,47 @@ export default function HomePage() {
   }, [activeScreen]);
 
   // Sepet
-  const cartDetails = useMemo(() => 
-    cart.map(item => {
-      const p = products.find(x => x.id === item.id);
-      return p ? { product: p, quantity: item.quantity } : null;
-    }).filter(Boolean) as CartLineItem[], 
-  [cart, products]);
-  const cartTotal = useMemo(() => cartDetails.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cartDetails]);
+  const cartDetails = useMemo(
+    () =>
+      cart
+        .map((item) => {
+          const p = products.find((x) => x.id === item.id);
+          return p ? { product: p, quantity: item.quantity } : null;
+        })
+        .filter(Boolean) as CartLineItem[],
+    [cart, products]
+  );
+
+  const cartTotal = useMemo(
+    () => cartDetails.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    [cartDetails]
+  );
 
   const isOutOfStock = useCallback((product: Product) => !product.inStock || product.stock === 0, []);
-  const handleIncrease = useCallback((productId: string) => {
+
+  const handleIncrease = useCallback(
+    (productId: string) => {
       const product = products.find((item) => item.id === productId);
-      if (product && isOutOfStock(product)) { Alert.alert("Bu ürün stokta bulunmuyor"); return; }
+      if (product && isOutOfStock(product)) {
+        Alert.alert("Bu ürün stokta bulunmuyor");
+        return;
+      }
       increase(productId);
-    }, [increase, isOutOfStock, products]);
+    },
+    [increase, isOutOfStock, products]
+  );
 
   // Ürün Tıklama
   const handleProductPress = (product: Product) => {
     setSelectedProduct(product);
     setPreviousScreen(activeScreen);
-    setActiveScreen('productDetail');
+    setActiveScreen("productDetail");
   };
-  const handleCloseDetail = () => { setActiveScreen(previousScreen); setSelectedProduct(null); };
+
+  const handleCloseDetail = () => {
+    setActiveScreen(previousScreen);
+    setSelectedProduct(null);
+  };
 
   // Floating Cart
   const pan = useRef(new Animated.ValueXY({ x: 16, y: Dimensions.get("window").height - 120 })).current;
@@ -265,9 +341,13 @@ export default function HomePage() {
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5,
-      onPanResponderGrant: () => { pan.extractOffset(); },
+      onPanResponderGrant: () => {
+        pan.extractOffset();
+      },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: () => { pan.flattenOffset(); },
+      onPanResponderRelease: () => {
+        pan.flattenOffset();
+      },
     })
   ).current;
 
@@ -275,27 +355,36 @@ export default function HomePage() {
     const qty = getQuantity(urun.id);
     const outOfStock = isOutOfStock(urun);
     const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
+
     return (
-      <TouchableOpacity 
-        key={urun.id} 
+      <TouchableOpacity
+        key={urun.id}
         style={[styles.productCard, outOfStock && styles.productCardDisabled]}
-        onPress={() => handleProductPress(urun)} 
+        onPress={() => handleProductPress(urun)}
         activeOpacity={0.9}
       >
         <View style={styles.productImageContainer}>
           <Image source={imageUrl ? { uri: imageUrl } : placeholderImage} style={styles.productImage} />
         </View>
+
         <View style={styles.productInfoContainer}>
-          <Text style={styles.productName} numberOfLines={2}>{urun.name}</Text>
+          <Text style={styles.productName} numberOfLines={2}>
+            {urun.name}
+          </Text>
+
           {urun.brand ? <Text style={styles.productBrand}>{urun.brand}</Text> : null}
+
           {urun.description && urun.description.trim().length > 0 ? (
             <Text style={styles.productDescriptionPreview} numberOfLines={1} ellipsizeMode="tail">
               {urun.description}
             </Text>
           ) : null}
+
           {outOfStock ? <Text style={styles.outOfStockBadge}>TÜKENDİ</Text> : null}
+
           <View style={styles.productBottomRow}>
             <Text style={styles.productPrice}>{formatPrice(urun.price)}</Text>
+
             {qty === 0 ? (
               <TouchableOpacity
                 style={[styles.addButton, outOfStock && styles.addButtonDisabled]}
@@ -309,11 +398,11 @@ export default function HomePage() {
             ) : (
               <View style={styles.counterContainer}>
                 <TouchableOpacity onPress={() => decrease(urun.id)} style={styles.counterBtn}>
-                   <Text style={styles.counterBtnText}>-</Text>
+                  <Text style={styles.counterBtnText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.counterValue}>{qty}</Text>
                 <TouchableOpacity onPress={() => handleIncrease(urun.id)} style={styles.counterBtn}>
-                   <Text style={styles.counterBtnText}>+</Text>
+                  <Text style={styles.counterBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -324,7 +413,11 @@ export default function HomePage() {
   };
 
   // Navigasyonlar
-  const handleCheckout = () => { if (!cartDetails.length) return Alert.alert("Sepet Boş"); setActiveScreen("address"); };
+  const handleCheckout = () => {
+    if (!cartDetails.length) return Alert.alert("Sepet Boş");
+    setActiveScreen("address");
+  };
+
   const handleSaveAddress = async (data: any) => {
     if (!token) return;
     try {
@@ -337,7 +430,14 @@ export default function HomePage() {
       Alert.alert("Adres", message);
     }
   };
-  const handleSaveCard = (data: any) => { setPaymentMethods([...paymentMethods, { id: Date.now().toString(), label: data.holder, description: `**** ${data.number.slice(-4)}` }]); setSelectedPaymentId(Date.now().toString()); setActiveScreen("payment"); };
+
+  const handleSaveCard = (data: any) => {
+    const id = Date.now().toString();
+    setPaymentMethods([...paymentMethods, { id, label: data.holder, description: `**** ${data.number.slice(-4)}` }]);
+    setSelectedPaymentId(id);
+    setActiveScreen("payment");
+  };
+
   const handleDeleteAddress = (id: string) => {
     if (!token) return;
     Alert.alert("Adres Sil", "Adresi silmek istediğinize emin misiniz?", [
@@ -357,10 +457,12 @@ export default function HomePage() {
       },
     ]);
   };
+
   const handleSetDefaultAddress = async (address: Address) => {
     if (!token) return;
     try {
       const currentDefault = addresses.find((item) => item.isDefault);
+
       if (currentDefault && currentDefault.id !== address.id) {
         await updateAddress(token, currentDefault.id, {
           title: currentDefault.title,
@@ -369,12 +471,14 @@ export default function HomePage() {
           isDefault: false,
         });
       }
+
       const updated = await updateAddress(token, address.id, {
         title: address.title,
         detail: address.detail,
         note: address.note,
         isDefault: true,
       });
+
       setAddresses((prev) =>
         prev.map((item) =>
           item.id === updated.id
@@ -388,8 +492,10 @@ export default function HomePage() {
       Alert.alert("Adres", message);
     }
   };
+
   const handleSubmitOrder = async () => {
-    if(!cartDetails.length) return Alert.alert("Sepet Boş");
+    if (!cartDetails.length) return Alert.alert("Sepet Boş");
+
     if (isGuest) {
       if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
         Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
@@ -399,14 +505,21 @@ export default function HomePage() {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
     }
-    const selectedAddress = isGuest
-      ? { id: "guest", ...guestAddress }
-      : addresses.find(a=>a.id===selectedAddressId);
+
+    const selectedAddress = isGuest ? ({ id: "guest", ...guestAddress } as any) : addresses.find((a) => a.id === selectedAddressId);
     if (!selectedAddress) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
     }
-    const payload = buildOrderPayload(cartDetails, cartTotal, selectedAddress, paymentMethods.find(p=>p.id===selectedPaymentId)!);
+
+    const selectedPayment = paymentMethods.find((p) => p.id === selectedPaymentId);
+    if (!selectedPayment) {
+      Alert.alert("Ödeme", "Lütfen ödeme yöntemi seçin.");
+      return;
+    }
+
+    const payload = buildOrderPayload(cartDetails, cartTotal, selectedAddress, selectedPayment);
+
     try {
       const response = await submitOrder(payload, token);
       setOrderId(response?.id ?? Math.floor(100000 + Math.random() * 900000).toString());
@@ -430,23 +543,34 @@ export default function HomePage() {
     ]);
   };
 
-  // --- RENDER ---
+  // --- RENDER ROUTES ---
   if (activeScreen === "productDetail" && selectedProduct) {
-    // getQuantity fonksiyonu ile güncel adedi alıyoruz
     const currentQty = getQuantity(selectedProduct.id);
     return (
-      <ProductDetailScreen 
-        product={selectedProduct} 
-        quantity={currentQty} 
-        onBack={handleCloseDetail} 
-        onIncrease={handleIncrease} 
-        onDecrease={decrease} 
+      <ProductDetailScreen
+        product={selectedProduct}
+        quantity={currentQty}
+        onBack={handleCloseDetail}
+        onIncrease={handleIncrease}
+        onDecrease={decrease}
         onGoToCart={() => setActiveScreen("cart")}
       />
     );
   }
 
-  if (activeScreen === "cart") return <CartScreen cartDetails={cartDetails} total={cartTotal} onBack={() => setActiveScreen("home")} onCheckout={handleCheckout} onIncrease={handleIncrease} onDecrease={decrease} isOutOfStock={isOutOfStock} />;
+  if (activeScreen === "cart")
+    return (
+      <CartScreen
+        cartDetails={cartDetails}
+        total={cartTotal}
+        onBack={() => setActiveScreen("home")}
+        onCheckout={handleCheckout}
+        onIncrease={handleIncrease}
+        onDecrease={decrease}
+        isOutOfStock={isOutOfStock}
+      />
+    );
+
   if (activeScreen === "address") {
     if (isGuest) {
       return (
@@ -480,84 +604,118 @@ export default function HomePage() {
       />
     );
   }
+
   if (activeScreen === "addAddress") return <AddAddressScreen onSave={handleSaveAddress} onCancel={() => setActiveScreen("address")} />;
-  if (activeScreen === "payment") return <PaymentScreen methods={paymentMethods} selectedId={selectedPaymentId} onSelect={setSelectedPaymentId} onBack={() => setActiveScreen("address")} onContinue={() => setActiveScreen("summary")} onAddCard={() => setActiveScreen("addCard")} onDelete={(id: string) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} />;
+  if (activeScreen === "payment")
+    return (
+      <PaymentScreen
+        methods={paymentMethods}
+        selectedId={selectedPaymentId}
+        onSelect={setSelectedPaymentId}
+        onBack={() => setActiveScreen("address")}
+        onContinue={() => setActiveScreen("summary")}
+        onAddCard={() => setActiveScreen("addCard")}
+        onDelete={(id: string) => setPaymentMethods(paymentMethods.filter((p) => p.id !== id))}
+      />
+    );
+
   if (activeScreen === "addCard") return <AddCardScreen onSave={handleSaveCard} onCancel={() => setActiveScreen("payment")} />;
+
   if (activeScreen === "summary") {
-    const summaryAddress = isGuest
-      ? { id: "guest", ...guestAddress }
-      : addresses.find(a => a.id === selectedAddressId);
+    const summaryAddress = isGuest ? ({ id: "guest", ...guestAddress } as any) : addresses.find((a) => a.id === selectedAddressId);
     return (
       <SummaryScreen
         cartDetails={cartDetails}
         total={cartTotal}
         address={summaryAddress}
-        payment={paymentMethods.find(p => p.id === selectedPaymentId)}
+        payment={paymentMethods.find((p) => p.id === selectedPaymentId)}
         onBack={() => setActiveScreen("payment")}
         onSubmit={handleSubmitOrder}
         onPressLegal={(key: LegalUrlKey) => Linking.openURL(LEGAL_URLS[key])}
       />
     );
   }
+
   if (activeScreen === "success") return <SuccessScreen orderId={orderId} onReturnHome={() => setActiveScreen("home")} />;
 
-  const displayProducts = isCategoryScreen ? selectedCategoryProducts : campaignProducts;
-  const pageTitle = isCategoryScreen ? (selectedCategory?.name || "Ürünler") : "Kampanyalı Fırsatlar";
+  // --- MAIN HOME UI ---
+  const showTopSlider = !isCategoryScreen && searchQuery.trim().length === 0;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary }}>
-        <StatusBar barStyle="light-content" backgroundColor={THEME.primary} />
-        <HomeHeader
-          isCategoryScreen={isCategoryScreen}
-          setActiveScreen={setActiveScreen}
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          setSelectedCategoryId={setSelectedCategoryId}
-          navigation={navigation}
-          isGuest={isGuest}
-          token={token}
-          handleAccountPress={handleAccountPress}
-          categoryListRef={categoryListRef}
-        />
-        <View style={styles.contentArea} {...swipeResponder.panHandlers}>
-            <ScrollView
-              ref={productListRef}
-              contentContainerStyle={{ paddingBottom: 100 }}
-              onScroll={(event) => {
-                productListOffset.current = event.nativeEvent.contentOffset.y;
-              }}
-              scrollEventThrottle={16}
-            >
-                {!isCategoryScreen && (
-                    <View style={styles.sliderSection}>
-                        <HomeSlider
-                          dailyDeals={dailyDeals}
-                          sliderRef={sliderRef}
-                          slideWidth={slideWidth}
-                          activeDealIndex={activeDealIndex}
-                          setActiveDealIndex={setActiveDealIndex}
-                        />
-                        <BrandScroller markalar={markalar} />
-                    </View>
-                )}
-                <ProductGrid
-                  pageTitle={pageTitle}
-                  displayProducts={displayProducts}
-                  renderProductCard={renderProductCard}
-                />
-            </ScrollView>
-        </View>
-        {cart.length > 0 && (
-             <Animated.View style={[styles.floatingCart, { transform: pan.getTranslateTransform() }]} {...panResponder.panHandlers}>
-                 <TouchableOpacity onPress={() => setActiveScreen("cart")} style={styles.floatingBtnInner}>
-                     <View style={styles.cartIconWrapper}>
-                        <Text style={{fontSize: 24}}>🛒</Text>
-                        <View style={styles.badge}><Text style={styles.badgeText}>{cart.reduce((a,b)=>a+b.quantity,0)}</Text></View>
-                     </View>
-                     <View style={styles.floatingTotal}><Text style={styles.floatingTotalText}>{formatPrice(cartTotal)}</Text></View>
-                 </TouchableOpacity>
-             </Animated.View>
-        )}
+      <StatusBar barStyle="light-content" backgroundColor={THEME.primary} />
+
+      <HomeHeader
+        isCategoryScreen={isCategoryScreen}
+        setActiveScreen={setActiveScreen}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        setSelectedCategoryId={(id) => {
+          setSelectedCategoryId(id);
+          setSearchQuery("");
+        }}
+        navigation={navigation}
+        isGuest={isGuest}
+        token={token}
+        handleAccountPress={handleAccountPress}
+        categoryListRef={categoryListRef}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
+
+      <View
+        style={styles.contentArea}
+        {...(searchQuery.trim().length > 0 ? {} : swipeResponder.panHandlers)}
+      >
+        <ScrollView
+          ref={productListRef}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ paddingBottom: 100 }}
+          onScroll={(event) => {
+            productListOffset.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+        >
+          {showTopSlider && (
+            <View style={styles.sliderSection}>
+              <HomeSlider
+                dailyDeals={dailyDeals}
+                sliderRef={sliderRef}
+                slideWidth={slideWidth}
+                activeDealIndex={activeDealIndex}
+                setActiveDealIndex={setActiveDealIndex}
+              />
+              <BrandScroller markalar={markalar} />
+            </View>
+          )}
+
+          <ProductGrid
+            pageTitle={pageTitle}
+            displayProducts={displayProducts}
+            renderProductCard={renderProductCard}
+          />
+        </ScrollView>
+      </View>
+
+      {cart.length > 0 && (
+        <Animated.View
+          style={[styles.floatingCart, { transform: pan.getTranslateTransform() }]}
+          {...panResponder.panHandlers}
+        >
+          <TouchableOpacity onPress={() => setActiveScreen("cart")} style={styles.floatingBtnInner}>
+            <View style={styles.cartIconWrapper}>
+              <Text style={{ fontSize: 24 }}>🛒</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{cart.reduce((a, b) => a + b.quantity, 0)}</Text>
+              </View>
+            </View>
+            <View style={styles.floatingTotal}>
+              <Text style={styles.floatingTotalText}>{formatPrice(cartTotal)}</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }

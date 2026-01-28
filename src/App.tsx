@@ -45,6 +45,7 @@ export default function App() {
       return [...prev, { ...product, quantity: 1 }];
     });
   };
+<Text style={{ padding: 10 }}>TEST-{Date.now()}</Text>
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {

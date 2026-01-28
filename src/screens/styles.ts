@@ -6,8 +6,14 @@ export const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 100 },
   mainHeader: { backgroundColor: THEME.primary, paddingBottom: 10 },
   logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 60, position: 'relative' },
-  headerLogoContainer: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-  headerLogo: { width: 220, height: 60 }, 
+headerLogoContainer: {
+  flex: 1,
+  alignItems: "flex-start",   // ✅ sola hizala
+  justifyContent: "center",
+  paddingLeft: 16,
+  paddingTop:50,            // ✅ soldan boşluk
+},
+  headerLogo: { width: 330, height: 100 }, 
   accountRow: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 16, gap: 10, marginBottom: 6 },
   accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
   accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 12 },
