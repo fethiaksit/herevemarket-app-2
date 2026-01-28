@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import { Alert, FlatList, SafeAreaView, StyleSheet, TextInput, View } from "react-native";
 import { Header } from "./components/Header";
 import { Cart } from "./components/Cart";
 import { LoginModal } from "./components/LoginModal";
@@ -27,6 +27,7 @@ export default function App() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [activeScreen, setActiveScreen] = useState<ScreenKey>(HOME_SCREEN);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const listRef = useRef<FlatList<Product>>(null);
   const hasUserScrolledRef = useRef(false);
   const isTransitioningRef = useRef(false);
@@ -72,10 +73,23 @@ export default function App() {
   }, []);
 
   const handleBackToList = useCallback(() => {
+    setSelectedProduct(null);
+    setActiveScreen(HOME_SCREEN);
+  }, []);
+
+  const goHome = useCallback(() => {
+    setSelectedCategoryId(HOME_CATEGORY_ID);
+    setSelectedProduct(null);
     setActiveScreen(HOME_SCREEN);
   }, []);
 
   const categoryRotation = useMemo(() => categories.map((c) => c.id), []);
+  const categoryNameById = useMemo(() => {
+    return categories.reduce<Record<string, string>>((acc, category) => {
+      acc[category.id] = category.name.toLowerCase();
+      return acc;
+    }, {});
+  }, []);
 
   const productsByCategory = useMemo(() => {
     return products.reduce<Record<string, Product[]>>((acc, product) => {
@@ -107,14 +121,23 @@ export default function App() {
   }, [selectedCategoryId]);
 
   const isHome = selectedCategoryId === HOME_CATEGORY_ID;
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
 
   const displayedProducts: Product[] = useMemo(() => {
-    if (isHome) return productsByCategory[PROMO_CATEGORY_ID] || [];
-    return productsByCategory[selectedCategoryId] || [];
-  }, [isHome, productsByCategory, selectedCategoryId]);
+    const baseProducts = isHome ? productsByCategory[PROMO_CATEGORY_ID] || [] : productsByCategory[selectedCategoryId] || [];
+    if (!normalizedQuery) return baseProducts;
+    return baseProducts.filter((product) => {
+      const nameMatch = product.name.toLowerCase().includes(normalizedQuery);
+      const brandMatch = product.brand?.toLowerCase().includes(normalizedQuery) ?? false;
+      const categoryName = product.categoryId ? categoryNameById[product.categoryId] : "";
+      const categoryMatch = categoryName?.includes(normalizedQuery) ?? false;
+      return nameMatch || brandMatch || categoryMatch;
+    });
+  }, [categoryNameById, isHome, normalizedQuery, productsByCategory, selectedCategoryId]);
 
   const handleEndReached = useCallback(() => {
-    if (!hasUserScrolledRef.current || isTransitioningRef.current) return;
+    if (isSearching || !hasUserScrolledRef.current || isTransitioningRef.current) return;
 
     const nextCategory = getNextCategoryId();
     if (nextCategory !== selectedCategoryId) {
@@ -122,7 +145,7 @@ export default function App() {
       setSelectedCategoryId(nextCategory);
     }
     hasUserScrolledRef.current = false;
-  }, [getNextCategoryId, selectedCategoryId]);
+  }, [getNextCategoryId, isSearching, selectedCategoryId]);
 
   const handleScrollBegin = useCallback(() => {
     hasUserScrolledRef.current = true;
@@ -136,10 +159,7 @@ export default function App() {
         cartCount={cartItems.length}
         onCartPress={() => setIsCartOpen(true)}
         onAddressPress={() => setIsAddressOpen(true)}
-        onHomePress={() => {
-          setSelectedCategoryId(HOME_CATEGORY_ID);
-          setActiveScreen(HOME_SCREEN);
-        }}
+        onHomePress={goHome}
       />
 
       <View style={styles.container}>
@@ -150,15 +170,31 @@ export default function App() {
           />
         ) : (
           <>
-            <CategorySelector
-              categories={categories}
-              selectedCategoryId={selectedCategoryId}
-              onSelect={selectCategory}
-              homeOptionLabel="Anasayfa"
-              homeCategoryId={HOME_CATEGORY_ID}
-            />
+            <View style={styles.searchWrapper}>
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Ürün, kategori veya marka ara..."
+                placeholderTextColor="#98a0ad"
+                style={styles.searchInput}
+                autoCorrect={false}
+                autoCapitalize="none"
+                returnKeyType="search"
+                clearButtonMode="while-editing"
+              />
+            </View>
 
-            {isHome ? <PromoSlider /> : null}
+            {!isSearching ? (
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelect={selectCategory}
+                homeOptionLabel="Anasayfa"
+                homeCategoryId={HOME_CATEGORY_ID}
+              />
+            ) : null}
+
+            {isHome && !isSearching ? <PromoSlider /> : null}
 
             <View style={styles.listWrapper}>
               <ProductList
@@ -201,5 +237,20 @@ const styles = StyleSheet.create({
   listWrapper: {
     flex: 1,
     paddingTop: 4,
+  },
+  searchWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  searchInput: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#1d2433",
+    borderWidth: 1,
+    borderColor: "#e5e8ef",
   },
 });
