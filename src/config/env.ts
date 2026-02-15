@@ -15,4 +15,10 @@ const extra = (Constants.expoConfig?.extra ?? {}) as {
 
 const stage: Stage = extra.stage ?? "development";
 const baseUrls = { ...defaultBaseUrls, ...(extra.apiBaseUrls ?? {}) };
-export const API_BASE_URL = "https://api.herevemarket.com";
+
+const envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+const configuredBaseUrl = envBaseUrl && envBaseUrl.length > 0 ? envBaseUrl : baseUrls[stage];
+
+export const API_BASE_URL = configuredBaseUrl.endsWith("/")
+  ? configuredBaseUrl.slice(0, -1)
+  : configuredBaseUrl;

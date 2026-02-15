@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   Image,
   Animated,
@@ -12,6 +13,7 @@ import {
   Linking,
   StatusBar,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -60,7 +62,6 @@ import SuccessScreen from "./flow/SuccessScreen";
 import HomeHeader from "./home/HomeHeader";
 import HomeSlider from "./home/HomeSlider";
 import BrandScroller from "./home/BrandScroller";
-import ProductGrid from "./home/ProductGrid";
 
 const buildOrderPayload = (
   cartDetails: CartLineItem[],
@@ -90,7 +91,17 @@ export default function HomePage() {
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
 
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [items, setItems] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState<number | null>(null);
+  const [isLoadingFirst, setIsLoadingFirst] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [canFetchMoreWithoutPagination, setCanFetchMoreWithoutPagination] = useState(true);
+
+  const products = items;
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(CAMPAIGN_CATEGORY_ID);
 
@@ -110,31 +121,96 @@ export default function HomePage() {
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
   const categoryListRef = useRef<ScrollView | null>(null);
-  const productListRef = useRef<ScrollView | null>(null);
+  const productListRef = useRef<FlatList<Product> | null>(null);
   const productListOffset = useRef(0);
 
   const { width } = Dimensions.get("window");
   const slideWidth = width - 32;
 
-  // Veri Çekme (Products)
+  const fetchPage = useCallback(
+    async (nextPage: number) => {
+      return getProducts({
+        page: nextPage,
+        limit,
+      });
+    },
+    [limit]
+  );
+
+  const loadFirstPage = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await fetchPage(1);
+      const firstItems = response.items;
+      setItems(firstItems.length ? firstItems : fallbackProducts);
+      setPage(1);
+      setTotalPages(response.pagination?.totalPages ?? null);
+      setCanFetchMoreWithoutPagination(true);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Ürünler alınamadı.";
+      setError(message);
+      setItems(fallbackProducts);
+      setPage(1);
+      setTotalPages(1);
+      setCanFetchMoreWithoutPagination(false);
+    }
+  }, [fetchPage]);
+
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
-        const data = await getProducts();
-        setProducts(data && data.length ? data : fallbackProducts);
-      } catch {
-        setProducts(fallbackProducts);
-      } finally {
-        setLoading(false);
-      }
+      setIsLoadingFirst(true);
+      await loadFirstPage();
+      setIsLoadingFirst(false);
     })();
-  }, []);
+  }, [loadFirstPage]);
+
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing || isLoadingFirst || isFetchingMore) return;
+    setIsRefreshing(true);
+    await loadFirstPage();
+    setIsRefreshing(false);
+  }, [isRefreshing, isLoadingFirst, isFetchingMore, loadFirstPage]);
+
+  const fetchMore = useCallback(async () => {
+    if (isFetchingMore || isLoadingFirst || isRefreshing) return;
+    if (totalPages !== null && page >= totalPages) return;
+    if (totalPages === null && !canFetchMoreWithoutPagination) return;
+
+    const nextPage = page + 1;
+    setIsFetchingMore(true);
+
+    try {
+      const response = await fetchPage(nextPage);
+      const nextItems = response.items;
+
+      setItems((prev) => [...prev, ...nextItems]);
+      setPage(nextPage);
+      setError(null);
+
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages);
+      } else if (nextItems.length === 0) {
+        setCanFetchMoreWithoutPagination(false);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Daha fazla ürün alınamadı.";
+      setError(message);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [
+    isFetchingMore,
+    isLoadingFirst,
+    isRefreshing,
+    totalPages,
+    page,
+    canFetchMoreWithoutPagination,
+    fetchPage,
+  ]);
 
   const loadAddresses = useCallback(async () => {
     if (!token) {
@@ -287,7 +363,7 @@ export default function HomePage() {
   useEffect(() => {
     if (activeScreen === "home" || activeScreen === "category") {
       requestAnimationFrame(() => {
-        productListRef.current?.scrollTo({ y: productListOffset.current, animated: false });
+        productListRef.current?.scrollToOffset({ offset: productListOffset.current, animated: false });
       });
     }
   }, [activeScreen]);
@@ -358,7 +434,6 @@ export default function HomePage() {
 
     return (
       <TouchableOpacity
-        key={urun.id}
         style={[styles.productCard, outOfStock && styles.productCardDisabled]}
         onPress={() => handleProductPress(urun)}
         activeOpacity={0.9}
@@ -641,6 +716,41 @@ export default function HomePage() {
   // --- MAIN HOME UI ---
   const showTopSlider = !isCategoryScreen && searchQuery.trim().length === 0;
 
+  const listFooter = useMemo(() => {
+    if (!isFetchingMore) return null;
+    return (
+      <View style={{ paddingVertical: 16 }}>
+        <ActivityIndicator size="small" color={THEME.primary} />
+      </View>
+    );
+  }, [isFetchingMore]);
+
+  const listHeader = useMemo(
+    () => (
+      <>
+        {showTopSlider && (
+          <View style={styles.sliderSection}>
+            <HomeSlider
+              dailyDeals={dailyDeals}
+              sliderRef={sliderRef}
+              slideWidth={slideWidth}
+              activeDealIndex={activeDealIndex}
+              setActiveDealIndex={setActiveDealIndex}
+            />
+            <BrandScroller markalar={markalar} />
+          </View>
+        )}
+
+        <View style={styles.productsSection}>
+          <Text style={styles.sectionTitle}>{pageTitle}</Text>
+          {isLoadingFirst ? <ActivityIndicator size="small" color={THEME.primary} /> : null}
+          {error ? <Text style={styles.noProductText}>{error}</Text> : null}
+        </View>
+      </>
+    ),
+    [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary }}>
       <StatusBar barStyle="light-content" backgroundColor={THEME.primary} />
@@ -667,35 +777,28 @@ export default function HomePage() {
         style={styles.contentArea}
         {...(searchQuery.trim().length > 0 ? {} : swipeResponder.panHandlers)}
       >
-        <ScrollView
+        <FlatList
           ref={productListRef}
+          data={displayProducts}
+          numColumns={2}
+          columnWrapperStyle={displayProducts.length > 1 ? styles.gridContainer : undefined}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => renderProductCard(item)}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: 100 }}
+          onEndReached={fetchMore}
+          onEndReachedThreshold={0.4}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          ListHeaderComponent={listHeader}
+          ListFooterComponent={listFooter}
+          ListEmptyComponent={!isLoadingFirst ? <Text style={styles.noProductText}>Bu kategoride henüz ürün bulunmuyor.</Text> : null}
           onScroll={(event) => {
             productListOffset.current = event.nativeEvent.contentOffset.y;
           }}
           scrollEventThrottle={16}
-        >
-          {showTopSlider && (
-            <View style={styles.sliderSection}>
-              <HomeSlider
-                dailyDeals={dailyDeals}
-                sliderRef={sliderRef}
-                slideWidth={slideWidth}
-                activeDealIndex={activeDealIndex}
-                setActiveDealIndex={setActiveDealIndex}
-              />
-              <BrandScroller markalar={markalar} />
-            </View>
-          )}
-
-          <ProductGrid
-            pageTitle={pageTitle}
-            displayProducts={displayProducts}
-            renderProductCard={renderProductCard}
-          />
-        </ScrollView>
+        />
       </View>
 
       {cart.length > 0 && (
