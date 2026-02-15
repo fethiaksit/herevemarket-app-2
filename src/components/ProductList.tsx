@@ -40,6 +40,7 @@ export const ProductList: React.FC<Props> = ({
             quantity={getQuantity(item.id)}
             onAdd={() => onAdd(item.id)}
             onRemove={() => onRemove(item.id)}
+            showImage={true}
           />
         </TouchableOpacity>
       )}
