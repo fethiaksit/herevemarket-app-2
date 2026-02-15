@@ -618,6 +618,44 @@ export default function HomePage() {
     ]);
   };
 
+  // --- MAIN HOME UI ---
+  const showTopSlider = !isCategoryScreen && searchQuery.trim().length === 0;
+
+  const listFooter = useMemo(() => {
+    if (!isFetchingMore) return null;
+    return (
+      <View style={{ paddingVertical: 16 }}>
+        <ActivityIndicator size="small" color={THEME.primary} />
+      </View>
+    );
+  }, [isFetchingMore]);
+
+  const listHeader = useMemo(
+    () => (
+      <>
+        {showTopSlider && (
+          <View style={styles.sliderSection}>
+            <HomeSlider
+              dailyDeals={dailyDeals}
+              sliderRef={sliderRef}
+              slideWidth={slideWidth}
+              activeDealIndex={activeDealIndex}
+              setActiveDealIndex={setActiveDealIndex}
+            />
+            <BrandScroller markalar={markalar} />
+          </View>
+        )}
+
+        <View style={styles.productsSection}>
+          <Text style={styles.sectionTitle}>{pageTitle}</Text>
+          {isLoadingFirst ? <ActivityIndicator size="small" color={THEME.primary} /> : null}
+          {error ? <Text style={styles.noProductText}>{error}</Text> : null}
+        </View>
+      </>
+    ),
+    [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
+  );
+
   // --- RENDER ROUTES ---
   if (activeScreen === "productDetail" && selectedProduct) {
     const currentQty = getQuantity(selectedProduct.id);
@@ -712,44 +750,6 @@ export default function HomePage() {
   }
 
   if (activeScreen === "success") return <SuccessScreen orderId={orderId} onReturnHome={() => setActiveScreen("home")} />;
-
-  // --- MAIN HOME UI ---
-  const showTopSlider = !isCategoryScreen && searchQuery.trim().length === 0;
-
-  const listFooter = useMemo(() => {
-    if (!isFetchingMore) return null;
-    return (
-      <View style={{ paddingVertical: 16 }}>
-        <ActivityIndicator size="small" color={THEME.primary} />
-      </View>
-    );
-  }, [isFetchingMore]);
-
-  const listHeader = useMemo(
-    () => (
-      <>
-        {showTopSlider && (
-          <View style={styles.sliderSection}>
-            <HomeSlider
-              dailyDeals={dailyDeals}
-              sliderRef={sliderRef}
-              slideWidth={slideWidth}
-              activeDealIndex={activeDealIndex}
-              setActiveDealIndex={setActiveDealIndex}
-            />
-            <BrandScroller markalar={markalar} />
-          </View>
-        )}
-
-        <View style={styles.productsSection}>
-          <Text style={styles.sectionTitle}>{pageTitle}</Text>
-          {isLoadingFirst ? <ActivityIndicator size="small" color={THEME.primary} /> : null}
-          {error ? <Text style={styles.noProductText}>{error}</Text> : null}
-        </View>
-      </>
-    ),
-    [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
-  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary }}>
