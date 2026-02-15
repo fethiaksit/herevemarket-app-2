@@ -51,8 +51,32 @@ export type ProductDto = {
 
 type ProductsResponse =
   | RawProduct[]
-  | { data?: RawProduct[]; pagination?: unknown }
+  | { data?: RawProduct[]; pagination?: RawPagination }
   | { data?: { data?: RawProduct[]; pagination?: unknown } };
+
+type RawPagination = {
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalPages?: number;
+};
+
+export type ProductsQuery = {
+  page?: number;
+  limit?: number;
+  category?: string;
+  search?: string;
+};
+
+export type ProductsResult = {
+  items: ProductDto[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 
   export async function fetchProducts() {
@@ -65,31 +89,11 @@ type ProductsResponse =
       body: JSON.stringify(payload),
     });
   }
-export async function getProducts() {
-  console.log("[getProducts] request started");
-  console.log("[getProducts] public request, no token");
-  const response = await apiFetch<ProductsResponse>("/products", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-
-  const rawData = Array.isArray(response)
-    ? response
-    : Array.isArray((response as { data?: RawProduct[] })?.data)
-    ? ((response as { data?: RawProduct[] }).data ?? [])
-    : Array.isArray((response as { data?: { data?: RawProduct[] } })?.data?.data)
-    ? ((response as { data?: { data?: RawProduct[] } }).data?.data ?? [])
-    : [];
-
-  // console.log("[getProducts] API raw data", response);
-  const mapped = rawData
+const mapRawProducts = (rawData: RawProduct[]): ProductDto[] => {
+  return rawData
     .map((item) => {
       const stock = Number(item.stock ?? 0);
-      const inStock =
-        typeof item.inStock === "boolean" ? item.inStock : stock > 0;
+      const inStock = typeof item.inStock === "boolean" ? item.inStock : stock > 0;
 
       return {
         id: String(item.id ?? item._id ?? item.clientId ?? ""),
@@ -102,17 +106,60 @@ export async function getProducts() {
         imagePath: item.imagePath,
         image: item.image ?? item.imageUrl,
         description: item.description,
-        category: Array.isArray(item.category)
-          ? item.category
-          : item.category
-          ? [item.category]
-          : [],
+        category: Array.isArray(item.category) ? item.category : item.category ? [item.category] : [],
         isCampaign: Boolean(item.isCampaign),
         isDiscounted: Boolean(item.isDiscounted),
       };
     })
     .filter((item) => item.id);
+};
 
-  // console.log("[getProducts] mapped products", mapped);
-  return mapped;
+const mapPagination = (pagination?: RawPagination) => {
+  if (!pagination) return undefined;
+  const page = Number(pagination.page);
+  const limit = Number(pagination.limit);
+  const total = Number(pagination.total);
+  const totalPages = Number(pagination.totalPages);
+
+  if (![page, limit, total, totalPages].every((value) => Number.isFinite(value) && value >= 0)) {
+    return undefined;
+  }
+
+  return { page, limit, total, totalPages };
+};
+
+export async function getProducts(query: ProductsQuery = {}): Promise<ProductsResult> {
+  console.log("[getProducts] request started");
+  console.log("[getProducts] public request, no token");
+  const params = new URLSearchParams();
+  if (query.page) params.set("page", String(query.page));
+  if (query.limit) params.set("limit", String(query.limit));
+  if (query.category) params.set("category", query.category);
+  if (query.search) params.set("search", query.search);
+
+  const path = params.toString().length ? `/products?${params.toString()}` : "/products";
+
+  const response = await apiFetch<ProductsResponse>(path, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const rawData = Array.isArray(response)
+    ? response
+    : Array.isArray((response as { data?: RawProduct[] })?.data)
+    ? ((response as { data?: RawProduct[] }).data ?? [])
+    : Array.isArray((response as { data?: { data?: RawProduct[] } })?.data?.data)
+    ? ((response as { data?: { data?: RawProduct[] } }).data?.data ?? [])
+    : [];
+
+  const pagination = !Array.isArray(response)
+    ? mapPagination((response as { pagination?: RawPagination })?.pagination)
+    : undefined;
+
+  return {
+    items: mapRawProducts(rawData),
+    pagination,
+  };
 }
