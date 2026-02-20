@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { CommonActions } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Alert,
@@ -152,19 +151,15 @@ export default function AddressListScreen({ navigation }: AddressListProps) {
   };
 
   const handleLogout = () => {
-    Alert.alert("Çıkış", "Çıkış yapmak istiyor musun?", [
+    Alert.alert("Çıkış", "Çıkış yapmak istediğine emin misin?", [
       { text: "İptal", style: "cancel" },
       {
         text: "Çıkış Yap",
         style: "destructive",
         onPress: async () => {
           await logout();
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: ROUTES.HOME }],
-            })
-          );
+          Alert.alert("Başarılı", "Çıkış yapıldı.");
+          navigation.reset({ index: 0, routes: [{ name: ROUTES.AUTH_LANDING }] });
         },
       },
     ]);
