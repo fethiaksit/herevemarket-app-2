@@ -30,6 +30,7 @@ export type User = {
 
 export type Address = {
   id: string;
+  _id?: string;
   title: string;
   detail: string;
   note?: string;

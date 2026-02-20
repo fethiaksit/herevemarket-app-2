@@ -1,5 +1,17 @@
 import { API_BASE_URL } from "../../config/env";
 
+export class ApiFetchError extends Error {
+  status: number;
+  data?: unknown;
+
+  constructor(status: number, message: string, data?: unknown) {
+    super(message);
+    this.name = "ApiFetchError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers ?? {});
   const hasFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
@@ -27,16 +39,26 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   const isJsonResponse = contentType.includes("application/json");
 
   if (!response.ok) {
-    const message = safeErrorMessage(rawBody, response.status, isJsonResponse, url);
+    let data: unknown = null;
+    if (isJsonResponse && rawBody?.trim()) {
+      try {
+        data = JSON.parse(rawBody);
+      } catch (parseError) {
+        console.warn("[apiFetch] failed to parse error body as JSON", { url, parseError });
+      }
+    }
+
+    const message = safeErrorMessage(rawBody, response.status, isJsonResponse, url, data);
     console.error("[apiFetch] request failed", {
       status: response.status,
       statusText: response.statusText,
       url,
       contentType,
       message,
+      data,
       rawBody: isJsonResponse ? undefined : rawBody,
     });
-    throw new Error(message);
+    throw new ApiFetchError(response.status, message, data);
   }
 
   if (response.status === 204 || rawBody.trim().length === 0) {
@@ -57,17 +79,14 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   }
 }
 
-function safeErrorMessage(rawBody: string, status: number, isJson: boolean, url: string): string {
-  if (isJson) {
-    try {
-      const data = JSON.parse(rawBody);
-      if (typeof data === "string") return data;
-      if (data?.message) return data.message;
-      if (data?.error) return data.error;
-    } catch (parseError) {
-      console.warn("[apiFetch] failed to parse error body as JSON", { url, parseError });
-    }
+function safeErrorMessage(rawBody: string | undefined, status: number, isJson: boolean, url: string, data?: unknown): string {
+  if (isJson && data && typeof data === "object") {
+    const responseData = data as { message?: string; error?: string };
+    if (typeof responseData.message === "string") return responseData.message;
+    if (typeof responseData.error === "string") return responseData.error;
   }
+
+  if (isJson && typeof data === "string") return data;
 
   if (status === 404) {
     return `Resource not found (404) for ${url}. Verify the path matches backend route definitions.`;

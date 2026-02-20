@@ -20,6 +20,9 @@ export type AddressListProps = NativeStackScreenProps<MainStackParamList, "Addre
 
 const emptyForm = { title: "", detail: "", note: "", isDefault: false };
 
+const getAddressKey = (address: Address, index: number) =>
+  String(address._id ?? address.id ?? `${address.title}-${index}`);
+
 export default function AddressListScreen({ navigation }: AddressListProps) {
   const { token, logout } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -157,8 +160,8 @@ export default function AddressListScreen({ navigation }: AddressListProps) {
         {addresses.length === 0 && !loading ? (
           <Text style={styles.emptyText}>Henüz kayıtlı adresiniz yok.</Text>
         ) : null}
-        {addresses.map((address) => (
-          <View key={address.id} style={styles.card}>
+        {addresses.map((address, index) => (
+          <View key={getAddressKey(address, index)} style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>{address.title}</Text>
               {address.isDefault ? <Text style={styles.defaultBadge}>Varsayılan</Text> : null}

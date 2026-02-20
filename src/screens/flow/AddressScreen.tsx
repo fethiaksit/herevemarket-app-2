@@ -3,7 +3,8 @@ import { ActivityIndicator, View, Text, ScrollView, TouchableOpacity } from "rea
 import { styles } from "../styles";
 import { Address } from "../../types";
 
-// *** DÜZELTME BURADA YAPILDI (safeAddresses.map kullanıldı) ***
+const getAddressId = (address: Address, index: number) => String(address._id ?? address.id ?? `${address.title}-${index}`);
+
 export default function AddressScreen({
   addresses,
   selectedId,
@@ -37,11 +38,11 @@ export default function AddressScreen({
         <Text style={styles.sectionHeader}>Kayıtlı Adreslerim</Text>
         {!safeAddresses.length && !loading ? <Text style={styles.emptyText}>Kayıtlı adres bulunamadı.</Text> : null}
         
-        {/* HATA DÜZELTİLDİ: addresses.map yerine safeAddresses.map kullanıldı */}
-        {safeAddresses.map((address: Address) => {
-          const isSelected = selectedId === address.id;
+        {safeAddresses.map((address: Address, index: number) => {
+          const addressId = getAddressId(address, index);
+          const isSelected = selectedId === addressId;
           return (
-            <TouchableOpacity key={address.id} style={[styles.selectionCard, isSelected && styles.selectionCardActive]} onPress={() => onSelect(address.id)}>
+            <TouchableOpacity key={addressId} style={[styles.selectionCard, isSelected && styles.selectionCardActive]} onPress={() => onSelect(addressId)}>
               <View style={styles.selectionHeader}>
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
                   <Text style={styles.radioIcon}>{isSelected ? "◉" : "○"}</Text>
@@ -50,7 +51,7 @@ export default function AddressScreen({
                 </View>
                 <View style={{ flexDirection: "row", gap: 12 }}>
                   <TouchableOpacity onPress={() => onSetDefault(address)}><Text style={styles.linkText}>Varsayılan Yap</Text></TouchableOpacity>
-                  <TouchableOpacity onPress={() => onDelete(address.id)}><Text style={styles.deleteText}>Sil</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => onDelete(addressId)}><Text style={styles.deleteText}>Sil</Text></TouchableOpacity>
                 </View>
               </View>
               <Text style={styles.selectionDetail}>{address.detail}</Text>

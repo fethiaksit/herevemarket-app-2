@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
+import { ApiFetchError } from "../services/api/client";
 
 export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Register">;
 
@@ -14,10 +15,30 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
   const handleSubmit = async () => {
     if (!name || !email || !password) return;
+
     try {
       await register(name, email, password);
     } catch (error) {
-      return;
+      console.error("[RegisterScreen] register failed", error);
+
+      if (error instanceof ApiFetchError && error.status === 409) {
+        Alert.alert(
+          "Bu e-posta zaten kayıtlı",
+          "Bu e-posta ile daha önce kayıt olunmuş. Giriş yapmayı deneyin.",
+          [
+            { text: "Giriş Yap", onPress: () => navigation.navigate("Login") },
+            { text: "Tamam", style: "cancel" },
+          ]
+        );
+        return;
+      }
+
+      if (error instanceof ApiFetchError && error.status === 400) {
+        Alert.alert("Hata", error.message || "Girilen bilgileri kontrol edin.");
+        return;
+      }
+
+      Alert.alert("Hata", "Bir hata oluştu, tekrar deneyin.");
     }
   };
 
