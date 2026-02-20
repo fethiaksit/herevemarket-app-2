@@ -3,6 +3,7 @@ import { ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, Vi
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
+import { ROUTES } from "../navigation/routes";
 
 export type AuthLandingProps = NativeStackScreenProps<AuthStackParamList, "AuthLanding">;
 
@@ -19,10 +20,10 @@ export default function AuthLandingScreen({ navigation }: AuthLandingProps) {
         <Text style={styles.title}>Hereve Market</Text>
         <Text style={styles.subtitle}>Hemen giriş yapın veya üye olmadan devam edin.</Text>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("Login")}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate(ROUTES.LOGIN)}>
           <Text style={styles.primaryButtonText}>Giriş Yap</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Register")}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate(ROUTES.REGISTER)}>
           <Text style={styles.secondaryButtonText}>Üye Ol</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.ghostButton} onPress={handleGuest}>

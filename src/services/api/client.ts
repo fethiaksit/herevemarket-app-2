@@ -12,6 +12,12 @@ export class ApiFetchError extends Error {
   }
 }
 
+export type ApiErrorShape = {
+  status: number;
+  message: string;
+  data?: unknown;
+};
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers ?? {});
   const hasFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
@@ -31,22 +37,16 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
     response = await fetch(url, { ...options, headers });
   } catch (err) {
     console.error("[apiFetch] network error", { url, err });
-    throw new Error("Network request failed. Check connectivity or DNS resolution.");
+    throw new ApiFetchError(0, "İnternet bağlantısı kurulamadı. Lütfen bağlantınızı kontrol edin.");
   }
 
   const rawBody = await response.text();
   const contentType = response.headers.get("content-type") ?? "";
   const isJsonResponse = contentType.includes("application/json");
+  const parsedBody = parseJsonSafe(rawBody);
 
   if (!response.ok) {
-    let data: unknown = null;
-    if (isJsonResponse && rawBody?.trim()) {
-      try {
-        data = JSON.parse(rawBody);
-      } catch (parseError) {
-        console.warn("[apiFetch] failed to parse error body as JSON", { url, parseError });
-      }
-    }
+    const data = isJsonResponse ? parsedBody : rawBody;
 
     const message = safeErrorMessage(rawBody, response.status, isJsonResponse, url, data);
     console.error("[apiFetch] request failed", {
@@ -70,13 +70,44 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
     return rawBody as unknown as T;
   }
 
-  try {
-    return JSON.parse(rawBody) as T;
-  } catch (parseError) {
-    console.error("[apiFetch] failed to parse JSON response", { url, parseError });
+  if (parsedBody == null) {
+    console.error("[apiFetch] failed to parse JSON response", { url });
     console.log("[apiFetch] raw body:", rawBody);
     throw new Error("Failed to parse JSON response from API.");
   }
+
+  return parsedBody as T;
+}
+
+function parseJsonSafe(rawBody: string): unknown | null {
+  if (!rawBody?.trim()) return null;
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeApiError(error: unknown): ApiErrorShape {
+  if (error instanceof ApiFetchError) {
+    return {
+      status: error.status,
+      message: error.message,
+      data: error.data,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      status: 0,
+      message: error.message,
+    };
+  }
+
+  return {
+    status: 0,
+    message: "Beklenmeyen bir hata oluştu.",
+  };
 }
 
 function safeErrorMessage(rawBody: string | undefined, status: number, isJson: boolean, url: string, data?: unknown): string {

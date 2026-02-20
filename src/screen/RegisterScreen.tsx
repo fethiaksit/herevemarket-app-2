@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TextInput, To
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
+import { ROUTES } from "../navigation/routes";
 import { ApiFetchError } from "../services/api/client";
 
 export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Register">;
@@ -26,7 +27,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           "Bu e-posta zaten kayıtlı",
           "Bu e-posta ile daha önce kayıt olunmuş. Giriş yapmayı deneyin.",
           [
-            { text: "Giriş Yap", onPress: () => navigation.navigate("Login") },
+            { text: "Giriş Yap", onPress: () => navigation.navigate(ROUTES.LOGIN) },
             { text: "Tamam", style: "cancel" },
           ]
         );
@@ -65,7 +66,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Üye Ol</Text>}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.LOGIN)}>
           <Text style={styles.footerText}>Zaten hesabın var mı? Giriş yap</Text>
         </TouchableOpacity>
       </View>

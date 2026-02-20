@@ -11,6 +11,7 @@ import { THEME } from "../../constants/theme";
 import { styles } from "../styles";
 import { CategoryDto } from "../../services/api/categories";
 import { Screen } from "../../types/home";
+import { ROUTES } from "../../navigation/routes";
 
 export default function HomeHeader({
   isCategoryScreen,
@@ -77,7 +78,7 @@ export default function HomeHeader({
           <>
             <TouchableOpacity
               style={styles.accountButton}
-              onPress={() => navigation.navigate("AddressList")}
+              onPress={() => navigation.navigate(ROUTES.ADDRESS_LIST)}
             >
               <Text style={styles.accountButtonText}>Adreslerim</Text>
             </TouchableOpacity>
@@ -92,7 +93,8 @@ export default function HomeHeader({
         ) : (
           <TouchableOpacity
             style={styles.accountButton}
-            onPress={handleAccountPress}
+            onPress={() => navigation.navigate(ROUTES.LOGIN)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={styles.accountButtonText}>👤 Giriş Yap</Text>
           </TouchableOpacity>
