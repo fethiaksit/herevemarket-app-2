@@ -29,6 +29,7 @@ import { getCategories, CategoryDto } from "../services/api/categories";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
+import { tokenStorage } from "../services/auth/tokenStorage";
 
 // --- TYPES / STYLES / CONSTANTS ---
 import { Address, OrderPayload } from "../types";
@@ -62,6 +63,7 @@ import SuccessScreen from "./flow/SuccessScreen";
 import HomeHeader from "./home/HomeHeader";
 import HomeSlider from "./home/HomeSlider";
 import BrandScroller from "./home/BrandScroller";
+import AuthGateSheet from "../components/AuthGateSheet";
 
 const buildOrderPayload = (
   cartDetails: CartLineItem[],
@@ -121,6 +123,7 @@ export default function HomePage() {
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
@@ -167,6 +170,33 @@ export default function HomePage() {
       setIsLoadingFirst(false);
     })();
   }, [loadFirstPage]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAuthGate = async () => {
+      if (token) {
+        if (isMounted) setShowAuthGate(false);
+        return;
+      }
+
+      const storedToken = await tokenStorage.getAccessToken();
+      if (isMounted) {
+        setShowAuthGate(!storedToken);
+      }
+    };
+
+    checkAuthGate();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
+  const handleAuthGateLogin = useCallback(async () => {
+    setShowAuthGate(false);
+    await logout();
+  }, [logout]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || isLoadingFirst || isFetchingMore) return;
@@ -819,6 +849,8 @@ export default function HomePage() {
           </TouchableOpacity>
         </Animated.View>
       )}
+
+      <AuthGateSheet visible={showAuthGate} onDismiss={() => setShowAuthGate(false)} onLogin={handleAuthGateLogin} />
     </SafeAreaView>
   );
 }
