@@ -645,11 +645,8 @@ export default function HomePage() {
       setShowAuthGate(true);
       return;
     }
-    Alert.alert("Hesabım", undefined, [
-      { text: "Adreslerim", onPress: () => navigation.navigate(ROUTES.ADDRESS_LIST) },
-      { text: "Çıkış Yap", style: "destructive", onPress: () => logout() },
-      { text: "Vazgeç", style: "cancel" },
-    ]);
+
+    navigation.navigate(ROUTES.ACCOUNT);
   };
 
   // --- MAIN HOME UI ---

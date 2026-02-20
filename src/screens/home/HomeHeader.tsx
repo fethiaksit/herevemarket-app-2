@@ -91,12 +91,8 @@ export default function HomeHeader({
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity
-            style={styles.accountButton}
-            onPress={() => navigation.navigate(ROUTES.LOGIN)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.accountButtonText}>👤 Giriş Yap</Text>
+          <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={styles.accountButtonText}>Hesabım</Text>
           </TouchableOpacity>
         )}
       </View>
