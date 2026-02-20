@@ -83,8 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(me);
       setIsGuest(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Üyelik başarısız.";
-      Alert.alert("Üyelik başarısız", message);
+      console.error("[Auth] register failed", error);
       throw error;
     } finally {
       setLoading(false);
