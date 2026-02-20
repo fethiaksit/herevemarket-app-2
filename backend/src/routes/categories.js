@@ -1,8 +1,10 @@
-import express from 'express';
-import { Category } from '../models/category.js';
-import { ok } from '../lib/response.js';
+import express from "express";
+import { Category } from "../models/category.js";
 
 const router = express.Router();
-router.get('/', async (_req, res) => ok(res, await Category.find({ isActive: true }).sort({ name: 1 })));
+router.get("/", (req, res) => {
+  res.json({ message: "categories ok" });
+});
+
 
 export default router;
