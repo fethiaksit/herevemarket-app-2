@@ -14,7 +14,6 @@ import {
   StatusBar,
   SafeAreaView,
   ActivityIndicator,
-  InteractionManager,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -32,7 +31,6 @@ import { normalizeApiError } from "../services/api/client";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../navigation/routes";
-import { tokenStorage } from "../services/auth/tokenStorage";
 
 // --- TYPES / STYLES / CONSTANTS ---
 import { Address, OrderPayload } from "../types";
@@ -93,7 +91,7 @@ const buildOrderPayload = (
 
 export default function HomePage() {
   const navigation = useNavigation<any>();
-  const { token, isGuest, logout } = useAuth();
+  const { user, token, loading: authLoading, isGuest, logout } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
 
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
@@ -179,35 +177,13 @@ export default function HomePage() {
   }, [loadFirstPage]);
 
   useEffect(() => {
-    let isMounted = true;
-    let interaction: { cancel?: () => void } | null = null;
+    if (authLoading) {
+      return;
+    }
 
-    const checkAuthGate = async () => {
-      try {
-        const storedToken = await tokenStorage.getAccessToken();
-        if (isMounted) {
-          if (!storedToken) {
-            interaction = InteractionManager.runAfterInteractions(() => {
-              if (isMounted) {
-                setShowAuthGate(true);
-              }
-            });
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setAuthChecked(true);
-        }
-      }
-    };
-
-    checkAuthGate();
-
-    return () => {
-      isMounted = false;
-      interaction?.cancel?.();
-    };
-  }, []);
+    setAuthChecked(true);
+    setShowAuthGate(!user);
+  }, [authLoading, user]);
 
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);
@@ -538,6 +514,10 @@ export default function HomePage() {
   // Navigasyonlar
   const handleCheckout = () => {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
     setActiveScreen("address");
   };
 
@@ -662,7 +642,7 @@ export default function HomePage() {
 
   const handleAccountPress = () => {
     if (!token) {
-      navigation.navigate(ROUTES.LOGIN);
+      setShowAuthGate(true);
       return;
     }
     Alert.alert("Hesabım", undefined, [
