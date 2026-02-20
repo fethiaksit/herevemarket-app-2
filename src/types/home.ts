@@ -14,7 +14,6 @@ export type OrderItemPayload = {
 export type Screen =
   | "home"
   | "category"
-  | "cart"
   | "address"
   | "addAddress"
   | "payment"

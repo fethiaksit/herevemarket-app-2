@@ -18,4 +18,7 @@ export type AuthStackParamList = {
 export type MainStackParamList = {
   Home: undefined;
   AddressList: undefined;
+  AuthLanding: undefined;
+  Login: undefined;
+  Register: undefined;
 };

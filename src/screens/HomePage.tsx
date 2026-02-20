@@ -14,6 +14,7 @@ import {
   StatusBar,
   SafeAreaView,
   ActivityIndicator,
+  InteractionManager,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -50,7 +51,7 @@ import { LEGAL_URLS } from "../constants/legalUrls";
 import { CartLineItem, LegalUrlKey, OrderItemPayload, PaymentMethod, Product, Screen } from "../types/home";
 
 // --- SCREENS ---
-import CartScreen from "./flow/CartScreen";
+import CartSheetContent from "../components/CartSheetContent";
 import AddressScreen from "./flow/AddressScreen";
 import GuestAddressScreen from "./flow/GuestAddressScreen";
 import PaymentScreen from "./flow/PaymentScreen";
@@ -64,6 +65,7 @@ import HomeHeader from "./home/HomeHeader";
 import HomeSlider from "./home/HomeSlider";
 import BrandScroller from "./home/BrandScroller";
 import AuthGateSheet from "../components/AuthGateSheet";
+import BottomSheetModal from "../components/BottomSheetModal";
 
 const buildOrderPayload = (
   cartDetails: CartLineItem[],
@@ -125,6 +127,7 @@ export default function HomePage() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const [showCartSheet, setShowCartSheet] = useState(false);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
@@ -174,12 +177,19 @@ export default function HomePage() {
 
   useEffect(() => {
     let isMounted = true;
+    let interaction: { cancel?: () => void } | null = null;
 
     const checkAuthGate = async () => {
       try {
         const storedToken = await tokenStorage.getAccessToken();
         if (isMounted) {
-          setShowAuthGate(!storedToken);
+          if (!storedToken) {
+            interaction = InteractionManager.runAfterInteractions(() => {
+              if (isMounted) {
+                setShowAuthGate(true);
+              }
+            });
+          }
         }
       } finally {
         if (isMounted) {
@@ -192,13 +202,15 @@ export default function HomePage() {
 
     return () => {
       isMounted = false;
+      interaction?.cancel?.();
     };
   }, []);
 
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);
     await logout();
-  }, [logout]);
+    navigation.navigate("Login");
+  }, [logout, navigation]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || isLoadingFirst || isFetchingMore) return;
@@ -702,23 +714,10 @@ export default function HomePage() {
         onBack={handleCloseDetail}
         onIncrease={handleIncrease}
         onDecrease={decrease}
-        onGoToCart={() => setActiveScreen("cart")}
+        onGoToCart={() => setShowCartSheet(true)}
       />
     );
   }
-
-  if (activeScreen === "cart")
-    return (
-      <CartScreen
-        cartDetails={cartDetails}
-        total={cartTotal}
-        onBack={() => setActiveScreen("home")}
-        onCheckout={handleCheckout}
-        onIncrease={handleIncrease}
-        onDecrease={decrease}
-        isOutOfStock={isOutOfStock}
-      />
-    );
 
   if (activeScreen === "address") {
     if (isGuest) {
@@ -726,7 +725,10 @@ export default function HomePage() {
         <GuestAddressScreen
           address={guestAddress}
           onChange={setGuestAddress}
-          onBack={() => setActiveScreen("cart")}
+          onBack={() => {
+            setActiveScreen("home");
+            setShowCartSheet(true);
+          }}
           onContinue={() => {
             if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
               Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
@@ -742,7 +744,10 @@ export default function HomePage() {
         addresses={addresses}
         selectedId={selectedAddressId}
         onSelect={setSelectedAddressId}
-        onBack={() => setActiveScreen("cart")}
+        onBack={() => {
+          setActiveScreen("home");
+          setShowCartSheet(true);
+        }}
         onContinue={() => setActiveScreen("payment")}
         onAddAddress={() => setActiveScreen("addAddress")}
         onDelete={handleDeleteAddress}
@@ -842,7 +847,7 @@ export default function HomePage() {
           style={[styles.floatingCart, { transform: pan.getTranslateTransform() }]}
           {...panResponder.panHandlers}
         >
-          <TouchableOpacity onPress={() => setActiveScreen("cart")} style={styles.floatingBtnInner}>
+          <TouchableOpacity onPress={() => setShowCartSheet(true)} style={styles.floatingBtnInner}>
             <View style={styles.cartIconWrapper}>
               <Text style={{ fontSize: 24 }}>🛒</Text>
               <View style={styles.badge}>
@@ -857,6 +862,20 @@ export default function HomePage() {
       )}
 
       <AuthGateSheet visible={showAuthGate} onDismiss={() => setShowAuthGate(false)} onLogin={handleAuthGateLogin} />
+      <BottomSheetModal visible={showCartSheet} onDismiss={() => setShowCartSheet(false)}>
+        <CartSheetContent
+          cartDetails={cartDetails}
+          total={cartTotal}
+          onDismiss={() => setShowCartSheet(false)}
+          onCheckout={() => {
+            setShowCartSheet(false);
+            handleCheckout();
+          }}
+          onIncrease={handleIncrease}
+          onDecrease={decrease}
+          isOutOfStock={isOutOfStock}
+        />
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
