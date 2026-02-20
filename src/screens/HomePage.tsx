@@ -14,7 +14,6 @@ import {
   StatusBar,
   SafeAreaView,
   ActivityIndicator,
-  InteractionManager,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -32,7 +31,6 @@ import { normalizeApiError } from "../services/api/client";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../navigation/routes";
-import { tokenStorage } from "../services/auth/tokenStorage";
 
 // --- TYPES / STYLES / CONSTANTS ---
 import { Address, OrderPayload } from "../types";
@@ -93,7 +91,7 @@ const buildOrderPayload = (
 
 export default function HomePage() {
   const navigation = useNavigation<any>();
-  const { token, isGuest, logout } = useAuth();
+  const { token, isGuest } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
 
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
@@ -128,7 +126,6 @@ export default function HomePage() {
   const [addressSubmitLoading, setAddressSubmitLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
 
@@ -178,42 +175,10 @@ export default function HomePage() {
     })();
   }, [loadFirstPage]);
 
-  useEffect(() => {
-    let isMounted = true;
-    let interaction: { cancel?: () => void } | null = null;
-
-    const checkAuthGate = async () => {
-      try {
-        const storedToken = await tokenStorage.getAccessToken();
-        if (isMounted) {
-          if (!storedToken) {
-            interaction = InteractionManager.runAfterInteractions(() => {
-              if (isMounted) {
-                setShowAuthGate(true);
-              }
-            });
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setAuthChecked(true);
-        }
-      }
-    };
-
-    checkAuthGate();
-
-    return () => {
-      isMounted = false;
-      interaction?.cancel?.();
-    };
-  }, []);
-
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);
-    await logout();
     navigation.navigate(ROUTES.LOGIN);
-  }, [logout, navigation]);
+  }, [navigation]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || isLoadingFirst || isFetchingMore) return;
@@ -709,10 +674,6 @@ export default function HomePage() {
     ),
     [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
   );
-
-  if (!authChecked) {
-    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
-  }
 
   // --- RENDER ROUTES ---
   if (activeScreen === "productDetail" && selectedProduct) {
