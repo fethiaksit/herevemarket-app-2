@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Alert } from "react-native";
 import { getCurrentUser, loginUser, registerUser } from "../services/api/auth";
+import { normalizeApiError } from "../services/api/client";
 import { tokenStorage } from "../services/auth/tokenStorage";
 import { User } from "../types";
 
@@ -65,8 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(me);
       setIsGuest(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Giriş başarısız.";
-      Alert.alert("Giriş başarısız", message);
+      const normalizedError = normalizeApiError(error);
+      console.error("[Auth] login failed", normalizedError);
       throw error;
     } finally {
       setLoading(false);

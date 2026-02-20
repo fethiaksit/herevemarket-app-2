@@ -28,8 +28,10 @@ import { buildImageUrl } from "../utils/buildImageUrl";
 import { getProducts } from "../services/api/products";
 import { getCategories, CategoryDto } from "../services/api/categories";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
+import { normalizeApiError } from "../services/api/client";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
+import { ROUTES } from "../navigation/routes";
 import { tokenStorage } from "../services/auth/tokenStorage";
 
 // --- TYPES / STYLES / CONSTANTS ---
@@ -123,6 +125,7 @@ export default function HomePage() {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>(initialPaymentMethods[0]?.id ?? "");
   const [orderId, setOrderId] = useState<string>("");
   const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressSubmitLoading, setAddressSubmitLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
@@ -209,7 +212,7 @@ export default function HomePage() {
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);
     await logout();
-    navigation.navigate("Login");
+    navigation.navigate(ROUTES.LOGIN);
   }, [logout, navigation]);
 
   const handleRefresh = useCallback(async () => {
@@ -270,8 +273,9 @@ export default function HomePage() {
       const defaultAddress = safeData.find((address) => address.isDefault) ?? safeData[0];
       setSelectedAddressId(defaultAddress?.id ?? "");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Adresler alınamadı.";
-      Alert.alert("Adresler", message);
+      const { message } = normalizeApiError(error);
+      Alert.alert("Adresler", message || "Adresler alınamadı.");
+      console.error("[Home] load addresses failed", error);
     } finally {
       setAddressesLoading(false);
     }
@@ -539,14 +543,20 @@ export default function HomePage() {
 
   const handleSaveAddress = async (data: any) => {
     if (!token) return;
+    setAddressSubmitLoading(true);
     try {
       const created = await createAddress(token, { ...data, isDefault: addresses.length === 0 });
       setAddresses((prev) => [...prev, created]);
-      setSelectedAddressId(created.id);
+      setSelectedAddressId(created.id || created._id || "");
+      await loadAddresses();
+      Alert.alert("Başarılı", "Adres kaydedildi.");
       setActiveScreen("address");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Adres kaydedilemedi.";
-      Alert.alert("Adres", message);
+      const { message } = normalizeApiError(error);
+      Alert.alert("Adres", message || "Adres kaydedilemedi.");
+      console.error("[Home] create address failed", error);
+    } finally {
+      setAddressSubmitLoading(false);
     }
   };
 
@@ -652,11 +662,11 @@ export default function HomePage() {
 
   const handleAccountPress = () => {
     if (!token) {
-      logout();
+      navigation.navigate(ROUTES.LOGIN);
       return;
     }
     Alert.alert("Hesabım", undefined, [
-      { text: "Adreslerim", onPress: () => navigation.navigate("AddressList") },
+      { text: "Adreslerim", onPress: () => navigation.navigate(ROUTES.ADDRESS_LIST) },
       { text: "Çıkış Yap", style: "destructive", onPress: () => logout() },
       { text: "Vazgeç", style: "cancel" },
     ]);
@@ -752,14 +762,14 @@ export default function HomePage() {
         onAddAddress={() => setActiveScreen("addAddress")}
         onDelete={handleDeleteAddress}
         onSetDefault={handleSetDefaultAddress}
-        onManageAddresses={() => navigation.navigate("AddressList")}
+        onManageAddresses={() => navigation.navigate(ROUTES.ADDRESS_LIST)}
         showManageButton
         loading={addressesLoading}
       />
     );
   }
 
-  if (activeScreen === "addAddress") return <AddAddressScreen onSave={handleSaveAddress} onCancel={() => setActiveScreen("address")} />;
+  if (activeScreen === "addAddress") return <AddAddressScreen loading={addressSubmitLoading} onSave={handleSaveAddress} onCancel={() => setActiveScreen("address")} />;
   if (activeScreen === "payment")
     return (
       <PaymentScreen

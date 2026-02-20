@@ -1,4 +1,5 @@
 import { ProductDto } from "../services/api/products";
+import { ROUTES } from "./routes";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -16,9 +17,9 @@ export type AuthStackParamList = {
 };
 
 export type MainStackParamList = {
-  Home: undefined;
-  AddressList: undefined;
-  AuthLanding: undefined;
-  Login: undefined;
-  Register: undefined;
+  [ROUTES.HOME]: undefined;
+  [ROUTES.ADDRESS_LIST]: undefined;
+  [ROUTES.AUTH_LANDING]: undefined;
+  [ROUTES.LOGIN]: undefined;
+  [ROUTES.REGISTER]: undefined;
 };
