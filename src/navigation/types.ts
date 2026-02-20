@@ -18,6 +18,7 @@ export type AuthStackParamList = {
 
 export type MainStackParamList = {
   [ROUTES.HOME]: undefined;
+  [ROUTES.ACCOUNT]: undefined;
   [ROUTES.ADDRESS_LIST]: undefined;
   [ROUTES.AUTH_LANDING]: undefined;
   [ROUTES.LOGIN]: undefined;
