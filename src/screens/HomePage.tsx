@@ -123,6 +123,7 @@ export default function HomePage() {
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
@@ -175,14 +176,15 @@ export default function HomePage() {
     let isMounted = true;
 
     const checkAuthGate = async () => {
-      if (token) {
-        if (isMounted) setShowAuthGate(false);
-        return;
-      }
-
-      const storedToken = await tokenStorage.getAccessToken();
-      if (isMounted) {
-        setShowAuthGate(!storedToken);
+      try {
+        const storedToken = await tokenStorage.getAccessToken();
+        if (isMounted) {
+          setShowAuthGate(!storedToken);
+        }
+      } finally {
+        if (isMounted) {
+          setAuthChecked(true);
+        }
       }
     };
 
@@ -191,7 +193,7 @@ export default function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, []);
 
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);
@@ -685,6 +687,10 @@ export default function HomePage() {
     ),
     [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
   );
+
+  if (!authChecked) {
+    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+  }
 
   // --- RENDER ROUTES ---
   if (activeScreen === "productDetail" && selectedProduct) {
