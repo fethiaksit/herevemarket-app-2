@@ -119,6 +119,15 @@ export default function AccountScreen() {
     navigation.navigate(ROUTES.ADDRESS_LIST);
   }, [navigation, token]);
 
+  const handleFavoritesPress = useCallback(() => {
+    if (!token) {
+      setShowAuthGate(true);
+      return;
+    }
+
+    navigation.navigate(ROUTES.FAVORITES);
+  }, [navigation, token]);
+
   const handleLogout = useCallback(() => {
     Alert.alert("Çıkış Yap", "Hesabından çıkış yapmak istediğine emin misin?", [
       { text: "Hayır", style: "cancel" },
@@ -184,6 +193,9 @@ export default function AccountScreen() {
           <Text style={sharedStyles.summarySectionTitle}>Hesap İşlemleri</Text>
           <TouchableOpacity style={{ paddingVertical: 10 }} onPress={handleAddressesPress}>
             <Text style={{ fontSize: 15, color: THEME.textDark, fontWeight: "600" }}>Adresler</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ paddingVertical: 10 }} onPress={handleFavoritesPress}>
+            <Text style={{ fontSize: 15, color: THEME.textDark, fontWeight: "600" }}>Favoriler</Text>
           </TouchableOpacity>
         </View>
 

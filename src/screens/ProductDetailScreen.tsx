@@ -9,6 +9,7 @@ import {
   SafeAreaView 
 } from "react-native";
 import { buildImageUrl } from "../utils/buildImageUrl";
+import { Heart } from "lucide-react-native";
 
 // Ana dosyadaki Type ile uyumlu olması için
 export interface Product {
@@ -27,10 +28,12 @@ export interface Product {
 type Props = {
   product: Product;
   quantity?: number; // Sepetteki adet sayısı
+  isFavorite?: boolean;
   onBack: () => void;
   onIncrease?: (id: string) => void;
   onDecrease?: (id: string) => void;
   onGoToCart?: () => void; // YENİ: Sepete git fonksiyonu
+  onToggleFavorite?: () => void;
 };
 
 // Tema renkleri
@@ -48,10 +51,12 @@ const THEME = {
 export const ProductDetailScreen: React.FC<Props> = ({ 
   product, 
   quantity = 0, 
+  isFavorite = false,
   onBack, 
   onIncrease = () => undefined, 
   onDecrease = () => undefined,
-  onGoToCart = () => undefined // Props'a eklendi
+  onGoToCart = () => undefined, // Props'a eklendi
+  onToggleFavorite = () => undefined,
 }) => {
   const isOutOfStock = product.stock === 0;
   const description =
@@ -68,7 +73,9 @@ export const ProductDetailScreen: React.FC<Props> = ({
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ürün Detayı</Text>
-        <View style={{ width: 40 }} /> 
+        <TouchableOpacity style={styles.favoriteHeaderBtn} onPress={onToggleFavorite}>
+          <Heart size={20} color={isFavorite ? THEME.danger : THEME.textDark} fill={isFavorite ? THEME.danger : "transparent"} />
+        </TouchableOpacity> 
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -161,6 +168,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 100 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, height: 60, backgroundColor: THEME.white, borderBottomWidth: 1, borderColor: "#E5E7EB" },
   backButton: { padding: 10 },
+  favoriteHeaderBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   backText: { fontSize: 24, color: THEME.primary, fontWeight: "bold" },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: THEME.textDark },
   imageContainer: { backgroundColor: THEME.white, height: 300, justifyContent: "center", alignItems: "center", marginBottom: 16 },
