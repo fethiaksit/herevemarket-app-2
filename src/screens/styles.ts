@@ -103,6 +103,7 @@ headerLogoContainer: {
   footerSimple: { padding: 16, backgroundColor: THEME.white, borderTopWidth: 1, borderColor: THEME.borderColor },
   input: { backgroundColor: THEME.white, borderWidth: 1, borderColor: THEME.borderColor, borderRadius: 8, padding: 12, fontSize: 16, marginBottom: 12, color: THEME.textDark },
   inputLabel: { fontSize: 14, fontWeight: '600', color: THEME.textDark, marginBottom: 6 },
+  errorText: { color: THEME.danger, fontSize: 12, marginTop: -8, marginBottom: 8 },
   selectionCard: { backgroundColor: THEME.white, padding: 16, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: THEME.borderColor },
   selectionCardActive: { borderColor: THEME.secondary, backgroundColor: '#FFFDF5', borderWidth: 2 },
   selectionHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
