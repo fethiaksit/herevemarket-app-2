@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
-import { Heart } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../hooks/useCart";
@@ -63,7 +63,7 @@ export default function FavoritesScreen() {
             <View style={styles.productCard}>
               <View style={styles.productImageContainer}>
                 <TouchableOpacity onPress={() => handleToggle(item)} style={styles.favoriteButton}>
-                  <Heart size={20} color={THEME.danger} fill={THEME.danger} />
+                  <Ionicons name="heart" size={20} color={THEME.danger} />
                 </TouchableOpacity>
                 {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.productImage} /> : null}
               </View>

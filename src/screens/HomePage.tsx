@@ -464,6 +464,7 @@ export default function HomePage() {
   const renderProductCard = (urun: Product) => {
     const qty = getQuantity(urun.id);
     const outOfStock = isOutOfStock(urun);
+    const isFav = isFavorite(urun.id);
     const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
 
     return (
@@ -479,9 +480,9 @@ export default function HomePage() {
             hitSlop={{ top: 6, left: 6, right: 6, bottom: 6 }}
           >
             <Ionicons
-              name={isFavorite(urun.id) ? "heart" : "heart-outline"}
+              name={isFav ? "heart" : "heart-outline"}
               size={20}
-              color={isFavorite(urun.id) ? THEME.danger : THEME.textGray}
+              color={isFav ? THEME.danger : THEME.textGray}
             />
           </TouchableOpacity>
           <Image source={imageUrl ? { uri: imageUrl } : placeholderImage} style={styles.productImage} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { ShoppingCart } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   cartCount: number;
@@ -27,7 +27,7 @@ export const Header: React.FC<Props> = ({ cartCount, onCartPress, onAddressPress
         </TouchableOpacity>
 
         <TouchableOpacity onPress={onCartPress} style={styles.iconBtn}>
-          <ShoppingCart color="#082A5F" />
+          <Ionicons name="cart-outline" size={22} color="#082A5F" />
           {cartCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{cartCount}</Text>
