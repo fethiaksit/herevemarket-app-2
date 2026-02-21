@@ -4,7 +4,7 @@ import { styles } from "../styles";
 import { formatPrice } from "../../utils/cartPrice";
 import { CartLineItem } from "../../types/home";
 
-export default function SummaryScreen({ cartDetails, total, address, payment, onBack, onSubmit, onPressLegal }: any) {
+export default function SummaryScreen({ cartDetails, total, address, payment, onBack, onSubmit, onPressLegal, isSubmitting }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
@@ -43,7 +43,7 @@ export default function SummaryScreen({ cartDetails, total, address, payment, on
         </View>
       </ScrollView>
       <View style={styles.footerSimple}>
-        <TouchableOpacity style={styles.primaryButton} onPress={onSubmit}><Text style={styles.primaryButtonText}>Siparişi Onayla</Text></TouchableOpacity>
+        <TouchableOpacity style={[styles.primaryButton, isSubmitting && styles.disabledButton]} onPress={onSubmit} disabled={isSubmitting}><Text style={styles.primaryButtonText}>{isSubmitting ? "Gönderiliyor..." : "Siparişi Onayla"}</Text></TouchableOpacity>
       </View>
     </View>
   );

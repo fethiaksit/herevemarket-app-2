@@ -39,15 +39,15 @@ export type Address = {
 
 export type OrderItemPayload = {
   productId: string;
-  name: string;
-  price: number;
   quantity: number;
 };
 
-export type OrderPayload = {
+export type GuestOrderPayload = {
   items: OrderItemPayload[];
-  totalPrice: number;
-  customer: { title: string; detail: string; note?: string };
-  paymentMethod: { id: string; label?: string };
-  createdAt: string;
+  customer: { fullName: string; phone: string; email?: string };
+  delivery: { title?: string; detail: string; note?: string };
+  paymentMethod: "cash" | "card";
+  couponCode?: string;
 };
+
+export type AuthOrderPayload = GuestOrderPayload;

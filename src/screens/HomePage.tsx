@@ -29,13 +29,13 @@ import { getProducts } from "../services/api/products";
 import { getCategories, CategoryDto } from "../services/api/categories";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
 import { normalizeApiError } from "../services/api/client";
-import { submitOrder } from "../services/api/orders";
+import { submitGuestOrder, submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { ROUTES } from "../navigation/routes";
 
 // --- TYPES / STYLES / CONSTANTS ---
-import { Address, OrderPayload } from "../types";
+import { Address, AuthOrderPayload, GuestOrderPayload } from "../types";
 import { styles } from "./styles";
 import { THEME } from "../constants/theme";
 import {
@@ -50,7 +50,7 @@ import {
   ensureCampaignCategory,
 } from "../constants/mockData";
 import { LEGAL_URLS } from "../constants/legalUrls";
-import { CartLineItem, LegalUrlKey, OrderItemPayload, PaymentMethod, Product, Screen } from "../types/home";
+import { CartLineItem, LegalUrlKey, PaymentMethod, Product, Screen } from "../types/home";
 
 // --- SCREENS ---
 import CartSheetContent from "../components/CartSheetContent";
@@ -69,25 +69,31 @@ import BrandScroller from "./home/BrandScroller";
 import AuthGateSheet from "../components/AuthGateSheet";
 import BottomSheetModal from "../components/BottomSheetModal";
 
+const resolvePaymentMethod = (payment: PaymentMethod): "cash" | "card" => {
+  const normalized = String(payment.label || payment.id || "").toLowerCase();
+  return normalized.includes("nakit") || normalized.includes("cash") ? "cash" : "card";
+};
+
 const buildOrderPayload = (
   cartDetails: CartLineItem[],
-  totalPrice: number,
   address: Address,
-  payment: PaymentMethod
-): OrderPayload => {
-  const items: OrderItemPayload[] = cartDetails.map(({ product, quantity }) => ({
-    productId: product.id,
-    name: product.name,
-    price: product.price,
+  payment: PaymentMethod,
+  guestContact?: { fullName: string; phone: string; email?: string }
+): GuestOrderPayload | AuthOrderPayload => {
+  const items = cartDetails.map(({ product, quantity }) => ({
+    productId: String(product.id),
     quantity,
   }));
 
   return {
     items,
-    totalPrice,
-    customer: { title: address.title, detail: address.detail, note: address.note },
-    paymentMethod: { id: payment.id, label: payment.label },
-    createdAt: new Date().toISOString(),
+    customer: {
+      fullName: guestContact?.fullName || "Müşteri",
+      phone: guestContact?.phone || "05550000000",
+      email: guestContact?.email || "",
+    },
+    delivery: { title: address.title, detail: address.detail, note: address.note },
+    paymentMethod: resolvePaymentMethod(payment),
   };
 };
 
@@ -128,6 +134,9 @@ export default function HomePage() {
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [addressSubmitLoading, setAddressSubmitLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
+  const [guestInfo, setGuestInfo] = useState({ fullName: "", phone: "", email: "" });
+  const [guestErrors, setGuestErrors] = useState<{ fullName?: string; phone?: string; detail?: string }>({});
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
@@ -624,13 +633,9 @@ export default function HomePage() {
 
   const handleSubmitOrder = async () => {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
+    if (isSubmittingOrder) return;
 
-    if (isGuest) {
-      if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
-        Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
-        return;
-      }
-    } else if (!selectedAddressId) {
+    if (!isGuest && !selectedAddressId) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
     }
@@ -641,22 +646,40 @@ export default function HomePage() {
       return;
     }
 
+    if (isGuest) {
+      const nextErrors: { fullName?: string; phone?: string; detail?: string } = {};
+      if (!guestInfo.fullName.trim()) nextErrors.fullName = "Ad Soyad zorunludur.";
+      if (!guestInfo.phone.trim()) nextErrors.phone = "Telefon zorunludur.";
+      if (!guestAddress.detail.trim()) nextErrors.detail = "Adres detayı zorunludur.";
+      setGuestErrors(nextErrors);
+      if (Object.keys(nextErrors).length) return;
+    }
+
     const selectedPayment = paymentMethods.find((p) => p.id === selectedPaymentId);
     if (!selectedPayment) {
       Alert.alert("Ödeme", "Lütfen ödeme yöntemi seçin.");
       return;
     }
 
-    const payload = buildOrderPayload(cartDetails, cartTotal, selectedAddress, selectedPayment);
+    const payload = buildOrderPayload(cartDetails, selectedAddress, selectedPayment, guestInfo);
 
     try {
-      const response = await submitOrder(payload, token);
+      setIsSubmittingOrder(true);
+      const response = isGuest ? await submitGuestOrder(payload as GuestOrderPayload) : await submitOrder(payload as AuthOrderPayload, token);
       setOrderId(response?.id ?? Math.floor(100000 + Math.random() * 900000).toString());
       clearCart();
       setActiveScreen("success");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Sipariş gönderilemedi.";
-      Alert.alert("Sipariş", message);
+      const normalized = normalizeApiError(error);
+      if (normalized.status === 429) {
+        Alert.alert("Sipariş", "Çok sık deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.");
+      } else if (normalized.status === 409) {
+        Alert.alert("Stok", normalized.message || "Bazı ürünlerde stok yetersiz.");
+      } else {
+        Alert.alert("Sipariş", normalized.message || "Sipariş gönderilemedi.");
+      }
+    } finally {
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -733,18 +756,15 @@ export default function HomePage() {
       return (
         <GuestAddressScreen
           address={guestAddress}
+          guestInfo={guestInfo}
+          errors={guestErrors}
           onChange={setGuestAddress}
+          onGuestChange={setGuestInfo}
           onBack={() => {
             setActiveScreen("home");
             setShowCartSheet(true);
           }}
-          onContinue={() => {
-            if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
-              Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
-              return;
-            }
-            setActiveScreen("payment");
-          }}
+          onContinue={() => setActiveScreen("payment")}
         />
       );
     }
@@ -794,6 +814,7 @@ export default function HomePage() {
         payment={paymentMethods.find((p) => p.id === selectedPaymentId)}
         onBack={() => setActiveScreen("payment")}
         onSubmit={handleSubmitOrder}
+        isSubmitting={isSubmittingOrder}
         onPressLegal={(key: LegalUrlKey) => Linking.openURL(LEGAL_URLS[key])}
       />
     );

@@ -12,6 +12,8 @@ const normalizeProduct = (item) => {
     price: Number(item.price) || 0,
     category: Array.isArray(item.category) ? item.category : [],
     image: item.imageUrl || "",
+    stock: Number(item.stock) || 0,
+    inStock: Number(item.stock) > 0,
     isActive: Boolean(item.isActive),
     createdAt: item.createdAt?.toISOString?.() || new Date().toISOString(),
   };
@@ -24,7 +26,7 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { name, price, category = [], imageUrl = "", isActive = true, createdAt } = req.body ?? {};
+    const { name, price, stock = 0, category = [], imageUrl = "", isActive = true, createdAt } = req.body ?? {};
 
     if (!name || typeof price !== "number") {
       return res.status(400).json({ message: "'name' ve 'price' alanları zorunludur." });
@@ -33,6 +35,7 @@ router.post("/", async (req, res, next) => {
     const product = await Product.create({
       name: String(name).trim(),
       price: Number(price),
+      stock: Number(stock),
       category: Array.isArray(category) ? category : [category].filter(Boolean),
       imageUrl: String(imageUrl || ""),
       isActive: Boolean(isActive),
