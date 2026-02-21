@@ -16,7 +16,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Heart } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // --- IMPORT ---
 import { ProductDetailScreen } from "./ProductDetailScreen";
@@ -478,7 +478,11 @@ export default function HomePage() {
             style={styles.favoriteButton}
             hitSlop={{ top: 6, left: 6, right: 6, bottom: 6 }}
           >
-            <Heart size={20} color={isFavorite(urun.id) ? THEME.danger : THEME.textGray} fill={isFavorite(urun.id) ? THEME.danger : "transparent"} />
+            <Ionicons
+              name={isFavorite(urun.id) ? "heart" : "heart-outline"}
+              size={20}
+              color={isFavorite(urun.id) ? THEME.danger : THEME.textGray}
+            />
           </TouchableOpacity>
           <Image source={imageUrl ? { uri: imageUrl } : placeholderImage} style={styles.productImage} />
         </View>
