@@ -7,6 +7,7 @@ import LoginScreen from "../screen/LoginScreen";
 import RegisterScreen from "../screen/RegisterScreen";
 import AddressListScreen from "../screen/AddressListScreen";
 import AccountScreen from "../screen/AccountScreen";
+import FavoritesScreen from "../screen/FavoritesScreen";
 import { MainStackParamList } from "./types";
 import { ROUTES } from "./routes";
 
@@ -19,6 +20,7 @@ export default function RootNavigator() {
         <MainStack.Screen name={ROUTES.HOME} component={HomePage} />
         <MainStack.Screen name={ROUTES.ACCOUNT} component={AccountScreen} />
         <MainStack.Screen name={ROUTES.ADDRESS_LIST} component={AddressListScreen} />
+        <MainStack.Screen name={ROUTES.FAVORITES} component={FavoritesScreen} />
         <MainStack.Screen name={ROUTES.AUTH_LANDING} component={AuthLandingScreen} />
         <MainStack.Screen name={ROUTES.LOGIN} component={LoginScreen} />
         <MainStack.Screen name={ROUTES.REGISTER} component={RegisterScreen} />

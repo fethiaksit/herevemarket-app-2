@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Heart } from "lucide-react-native";
 
 // --- IMPORT ---
 import { ProductDetailScreen } from "./ProductDetailScreen";
@@ -30,6 +31,7 @@ import { createAddress, deleteAddress, getAddresses, updateAddress } from "../se
 import { normalizeApiError } from "../services/api/client";
 import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { ROUTES } from "../navigation/routes";
 
 // --- TYPES / STYLES / CONSTANTS ---
@@ -93,6 +95,7 @@ export default function HomePage() {
   const navigation = useNavigation<any>();
   const { user, token, loading: authLoading, isGuest, logout } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
   const [items, setItems] = useState<Product[]>([]);
@@ -451,6 +454,13 @@ export default function HomePage() {
     })
   ).current;
 
+  const handleFavoriteToggle = useCallback(async (product: Product) => {
+    const result = await toggleFavorite(product, () => setShowAuthGate(true));
+    if (result.error) {
+      Alert.alert("Favoriler", result.error);
+    }
+  }, [toggleFavorite]);
+
   const renderProductCard = (urun: Product) => {
     const qty = getQuantity(urun.id);
     const outOfStock = isOutOfStock(urun);
@@ -463,6 +473,13 @@ export default function HomePage() {
         activeOpacity={0.9}
       >
         <View style={styles.productImageContainer}>
+          <TouchableOpacity
+            onPress={() => handleFavoriteToggle(urun)}
+            style={styles.favoriteButton}
+            hitSlop={{ top: 6, left: 6, right: 6, bottom: 6 }}
+          >
+            <Heart size={20} color={isFavorite(urun.id) ? THEME.danger : THEME.textGray} fill={isFavorite(urun.id) ? THEME.danger : "transparent"} />
+          </TouchableOpacity>
           <Image source={imageUrl ? { uri: imageUrl } : placeholderImage} style={styles.productImage} />
         </View>
 
@@ -698,6 +715,8 @@ export default function HomePage() {
       <ProductDetailScreen
         product={selectedProduct}
         quantity={currentQty}
+        isFavorite={isFavorite(selectedProduct.id)}
+        onToggleFavorite={() => handleFavoriteToggle(selectedProduct)}
         onBack={handleCloseDetail}
         onIncrease={handleIncrease}
         onDecrease={decrease}
