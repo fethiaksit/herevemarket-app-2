@@ -792,9 +792,6 @@ export default function HomePage() {
           setSelectedCategoryId(id);
           setSearchQuery("");
         }}
-        navigation={navigation}
-        isGuest={isGuest}
-        token={token}
         handleAccountPress={handleAccountPress}
         categoryListRef={categoryListRef}
         searchQuery={searchQuery}

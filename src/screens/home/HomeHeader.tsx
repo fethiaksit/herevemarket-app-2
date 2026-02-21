@@ -11,7 +11,6 @@ import { THEME } from "../../constants/theme";
 import { styles } from "../styles";
 import { CategoryDto } from "../../services/api/categories";
 import { Screen } from "../../types/home";
-import { ROUTES } from "../../navigation/routes";
 
 export default function HomeHeader({
   isCategoryScreen,
@@ -19,9 +18,6 @@ export default function HomeHeader({
   categories,
   selectedCategoryId,
   setSelectedCategoryId,
-  navigation,
-  isGuest,
-  token,
   handleAccountPress,
   categoryListRef,
 
@@ -34,9 +30,6 @@ export default function HomeHeader({
   categories: CategoryDto[];
   selectedCategoryId: string | null;
   setSelectedCategoryId: React.Dispatch<React.SetStateAction<string | null>>;
-  navigation: any;
-  isGuest: boolean;
-  token: string | null;
   handleAccountPress: () => void;
   categoryListRef: React.RefObject<ScrollView>;
 
@@ -74,27 +67,9 @@ export default function HomeHeader({
       </View>
 
       <View style={styles.accountRow}>
-        {!isGuest && token ? (
-          <>
-            <TouchableOpacity
-              style={styles.accountButton}
-              onPress={() => navigation.navigate(ROUTES.ADDRESS_LIST)}
-            >
-              <Text style={styles.accountButtonText}>Adreslerim</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.accountButton}
-              onPress={handleAccountPress}
-            >
-              <Text style={styles.accountButtonText}>Hesabım</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.accountButtonText}>Hesabım</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.accountButtonText}>Hesabım</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.categoryContainer}>
