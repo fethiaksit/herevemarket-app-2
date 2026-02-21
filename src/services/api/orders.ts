@@ -1,14 +1,10 @@
 import { apiFetch } from "./client";
 import { OrderPayload } from "../../types";
 
-export async function submitOrder(payload: OrderPayload, token?: string | null) {
+export async function submitOrder(payload: OrderPayload, accessToken?: string | null) {
   return apiFetch<{ id: string }>("/orders", {
     method: "POST",
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
+    accessToken,
     body: JSON.stringify(payload),
   });
 }

@@ -18,25 +18,30 @@ export type ApiErrorShape = {
   data?: unknown;
 };
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}) {
-  const headers = new Headers(options.headers ?? {});
-  const hasFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
-  const hasJsonBody = options.body != null && !hasFormData;
+export type ApiFetchOptions = RequestInit & {
+  accessToken?: string | null;
+};
+
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
+  const { accessToken, ...requestOptions } = options;
+  const headers = new Headers(requestOptions.headers ?? {});
+  const hasFormData = typeof FormData !== "undefined" && requestOptions.body instanceof FormData;
+  const hasJsonBody = requestOptions.body != null && !hasFormData;
+
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+
   if (hasJsonBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const url = `${API_BASE_URL}${path}`;
 
-  console.log("[apiFetch] request started", {
-    url,
-    method: options.method ?? "GET",
-  });
+  const url = `${API_BASE_URL}${path}`;
 
   let response: Response;
   try {
-    response = await fetch(url, { ...options, headers });
-  } catch (err) {
-    console.error("[apiFetch] network error", { url, err });
+    response = await fetch(url, { ...requestOptions, headers });
+  } catch {
     throw new ApiFetchError(0, "İnternet bağlantısı kurulamadı. Lütfen bağlantınızı kontrol edin.");
   }
 
@@ -47,17 +52,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const data = isJsonResponse ? parsedBody : rawBody;
-
     const message = safeErrorMessage(rawBody, response.status, isJsonResponse, url, data);
-    console.error("[apiFetch] request failed", {
-      status: response.status,
-      statusText: response.statusText,
-      url,
-      contentType,
-      message,
-      data,
-      rawBody: isJsonResponse ? undefined : rawBody,
-    });
     throw new ApiFetchError(response.status, message, data);
   }
 
@@ -66,13 +61,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   }
 
   if (!isJsonResponse) {
-    console.warn("[apiFetch] non-JSON success response", { url, contentType });
     return rawBody as unknown as T;
   }
 
   if (parsedBody == null) {
-    console.error("[apiFetch] failed to parse JSON response", { url });
-    console.log("[apiFetch] raw body:", rawBody);
     throw new Error("Failed to parse JSON response from API.");
   }
 

@@ -16,46 +16,38 @@ function normalizeAddress(address: Address, index: number): Address {
   };
 }
 
-export async function getAddresses(token: string): Promise<Address[]> {
+export async function getAddresses(accessToken: string): Promise<Address[]> {
   const res = await apiFetch<GetAddressesResponse>("/user/addresses", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    accessToken,
   });
 
   const safeAddresses = Array.isArray(res?.addresses) ? res.addresses : [];
   return safeAddresses.map((address, index) => normalizeAddress(address, index));
 }
 
-export async function createAddress(token: string, payload: AddressPayload): Promise<Address> {
+export async function createAddress(accessToken: string, payload: AddressPayload): Promise<Address> {
   const created = await apiFetch<Address>("/user/addresses", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    accessToken,
     body: JSON.stringify(payload),
   });
 
   return normalizeAddress(created, Date.now());
 }
 
-export async function updateAddress(token: string, id: string, payload: AddressPayload): Promise<Address> {
+export async function updateAddress(accessToken: string, id: string, payload: AddressPayload): Promise<Address> {
   const updated = await apiFetch<Address>(`/user/addresses/${id}`, {
     method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    accessToken,
     body: JSON.stringify(payload),
   });
 
   return normalizeAddress(updated, Date.now());
 }
 
-export async function deleteAddress(token: string, id: string) {
+export async function deleteAddress(accessToken: string, id: string) {
   return apiFetch<void>(`/user/addresses/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    accessToken,
   });
 }

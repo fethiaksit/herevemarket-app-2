@@ -8,6 +8,7 @@ export type AuthContextValue = {
   user: User | null;
   token: string | null;
   loading: boolean;
+  authChecked: boolean;
   isGuest: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
@@ -23,10 +24,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
 
   const loadFromStorage = useCallback(async () => {
     setLoading(true);
+    setAuthChecked(false);
     const storedToken = await tokenStorage.getAccessToken();
 
     if (!storedToken) {
@@ -34,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
       setIsGuest(false);
       setLoading(false);
+      setAuthChecked(true);
       return;
     }
 
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
     } finally {
       setLoading(false);
+      setAuthChecked(true);
     }
   }, []);
 
@@ -122,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       token,
       loading,
+      authChecked,
       isGuest,
       login,
       register,
@@ -130,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loadFromStorage,
       refreshUser,
     }),
-    [user, token, loading, isGuest, login, register, logout, continueAsGuest, loadFromStorage, refreshUser]
+    [user, token, loading, authChecked, isGuest, login, register, logout, continueAsGuest, loadFromStorage, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
