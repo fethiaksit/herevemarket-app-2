@@ -22,7 +22,7 @@ router.post("/favorites", UserAuth, async (req, res, next) => {
       return res.status(result.status).json({ message: result.message });
     }
 
-    return res.status(200).json({ message: "Favorilere eklendi" });
+    return res.status(200).json({ data: result.data.map(mapProductForClient) });
   } catch (error) {
     return next(error);
   }
@@ -37,7 +37,7 @@ router.delete("/favorites/:productId", UserAuth, async (req, res, next) => {
       return res.status(result.status).json({ message: result.message });
     }
 
-    return res.status(200).json({ message: "Favorilerden kaldırıldı" });
+    return res.status(200).json({ data: result.data.map(mapProductForClient) });
   } catch (error) {
     return next(error);
   }
