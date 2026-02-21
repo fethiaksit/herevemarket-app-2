@@ -5,6 +5,8 @@ type RawProduct = {
   id?: string;
   name?: string;
   price?: number | string;
+  saleEnabled?: boolean;
+  salePrice?: number | string | null;
   brand?: string;
   barcode?: string;
   stock?: number | string;
@@ -22,6 +24,8 @@ type RawProduct = {
 export type ProductInput = {
   name: string;
   price: number;
+  saleEnabled?: boolean;
+  salePrice?: number;
   brand?: string;
   barcode?: string;
   stock?: number;
@@ -36,6 +40,8 @@ export type ProductDto = {
   id: string;
   name: string;
   price: number;
+  saleEnabled: boolean;
+  salePrice?: number;
   brand?: string;
   barcode?: string;
   stock: number;
@@ -99,6 +105,8 @@ const mapRawProducts = (rawData: RawProduct[]): ProductDto[] => {
         id: String(item.id ?? item._id ?? item.clientId ?? ""),
         name: item.name ?? "Adsız Ürün",
         price: Number(item.price) || 0,
+        saleEnabled: Boolean(item.saleEnabled),
+        salePrice: item.salePrice == null ? undefined : Number(item.salePrice) || 0,
         brand: item.brand,
         barcode: item.barcode,
         stock,

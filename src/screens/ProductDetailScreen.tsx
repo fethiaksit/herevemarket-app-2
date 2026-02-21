@@ -16,6 +16,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  saleEnabled?: boolean;
+  salePrice?: number;
   imagePath?: string;
   image?: string;
   brand?: string;
@@ -64,6 +66,8 @@ export const ProductDetailScreen: React.FC<Props> = ({
       ? product.description
       : "Bu ürün için açıklama bulunmamaktadır.";
   const imageUrl = product.imagePath ? buildImageUrl(product.imagePath) : product.image ?? "";
+  const isOnSale = Boolean(product.saleEnabled) && Number(product.salePrice) > 0 && Number(product.salePrice) < Number(product.price);
+  const activePrice = isOnSale ? Number(product.salePrice) : Number(product.price);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -99,9 +103,16 @@ export const ProductDetailScreen: React.FC<Props> = ({
           <Text style={styles.name}>{product.name}</Text>
           
           <View style={styles.priceRow}>
-            <Text style={styles.price}>
-                {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(product.price)}
-            </Text>
+            <View>
+              <Text style={styles.price}>
+                {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(activePrice)}
+              </Text>
+              {isOnSale ? (
+                <Text style={styles.originalPrice}>
+                  {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(product.price)}
+                </Text>
+              ) : null}
+            </View>
             {isOutOfStock ? (
               <View style={[styles.stockBadge, styles.bgRed]}>
                 <Text style={[styles.stockText, styles.stockTextOutOfStock]}>Tükendi</Text>
@@ -182,6 +193,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: "bold", color: THEME.textDark, marginBottom: 12 },
   priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
   price: { fontSize: 24, fontWeight: "bold", color: THEME.primary },
+  originalPrice: { fontSize: 13, color: THEME.textGray, textDecorationLine: "line-through", marginTop: 4 },
   stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   bgRed: { backgroundColor: "#FEE2E2" },
   stockText: { fontWeight: "700", fontSize: 12 },

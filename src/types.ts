@@ -8,6 +8,8 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  saleEnabled?: boolean;
+  salePrice?: number;
   brand?: string;
   barcode?: string;
   stock: number;

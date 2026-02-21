@@ -473,6 +473,8 @@ export default function HomePage() {
     const outOfStock = isOutOfStock(urun);
     const isFav = isFavorite(urun.id);
     const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
+    const isOnSale = Boolean(urun.saleEnabled) && Number(urun.salePrice) > 0 && Number(urun.salePrice) < Number(urun.price);
+    const activePrice = isOnSale ? Number(urun.salePrice) : Number(urun.price);
 
     return (
       <TouchableOpacity
@@ -511,7 +513,10 @@ export default function HomePage() {
           {outOfStock ? <Text style={styles.outOfStockBadge}>TÜKENDİ</Text> : null}
 
           <View style={styles.productBottomRow}>
-            <Text style={styles.productPrice}>{formatPrice(urun.price)}</Text>
+            <View style={styles.productPriceGroup}>
+              <Text style={styles.productPrice}>{formatPrice(activePrice)}</Text>
+              {isOnSale ? <Text style={styles.productOriginalPrice}>{formatPrice(urun.price)}</Text> : null}
+            </View>
 
             {qty === 0 ? (
               <TouchableOpacity
