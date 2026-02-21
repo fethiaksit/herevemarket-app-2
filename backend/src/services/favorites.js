@@ -106,6 +106,8 @@ export function mapProductForClient(item) {
     clientId: item.clientId?.toString?.(),
     name: item.name,
     price: Number(item.price) || 0,
+    saleEnabled: Boolean(item.saleEnabled),
+    salePrice: item.salePrice == null ? undefined : Number(item.salePrice) || 0,
     stock,
     inStock: typeof item.inStock === "boolean" ? item.inStock : stock > 0,
     brand: item.brand,
