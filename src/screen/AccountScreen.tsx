@@ -7,6 +7,7 @@ import { ROUTES } from "../navigation/routes";
 import { MainStackParamList } from "../navigation/types";
 import { styles as sharedStyles } from "../screens/styles";
 import { THEME } from "../constants/theme";
+import AuthGateSheet from "../components/AuthGateSheet";
 import { User } from "../types";
 import { normalizeApiError } from "../services/api/client";
 
@@ -34,6 +35,7 @@ export default function AccountScreen() {
   const [loading, setLoading] = useState(!user);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const profileRef = useRef<ProfileUser | null>((user as ProfileUser | null) ?? null);
   const unauthorizedHandledRef = useRef(false);
 
@@ -101,6 +103,22 @@ export default function AccountScreen() {
 
   const fullName = useMemo(() => (profile ? getFullName(profile) : "-"), [profile]);
 
+
+  const handleAuthGateLogin = useCallback(async () => {
+    setShowAuthGate(false);
+    await logout();
+    navigation.navigate(ROUTES.LOGIN);
+  }, [logout, navigation]);
+
+  const handleAddressesPress = useCallback(() => {
+    if (!token) {
+      setShowAuthGate(true);
+      return;
+    }
+
+    navigation.navigate(ROUTES.ADDRESS_LIST);
+  }, [navigation, token]);
+
   const handleLogout = useCallback(() => {
     Alert.alert("Çıkış Yap", "Hesabından çıkış yapmak istediğine emin misin?", [
       { text: "Hayır", style: "cancel" },
@@ -162,10 +180,19 @@ export default function AccountScreen() {
           </View>
         ) : null}
 
+        <View style={sharedStyles.summaryCard}>
+          <Text style={sharedStyles.summarySectionTitle}>Hesap İşlemleri</Text>
+          <TouchableOpacity style={{ paddingVertical: 10 }} onPress={handleAddressesPress}>
+            <Text style={{ fontSize: 15, color: THEME.textDark, fontWeight: "600" }}>Adresler</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity style={[sharedStyles.secondaryButton, { marginTop: 8, alignItems: "center" }]} onPress={handleLogout}>
           <Text style={sharedStyles.secondaryButtonText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <AuthGateSheet visible={showAuthGate} onDismiss={() => setShowAuthGate(false)} onLogin={handleAuthGateLogin} />
     </SafeAreaView>
   );
 }
