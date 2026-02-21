@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../navigation/routes";
@@ -8,6 +8,7 @@ import { MainStackParamList } from "../navigation/types";
 import { styles as sharedStyles } from "../screens/styles";
 import { THEME } from "../constants/theme";
 import { User } from "../types";
+import { normalizeApiError } from "../services/api/client";
 
 type Navigation = NativeStackNavigationProp<MainStackParamList>;
 type ProfileUser = User & { firstName?: string; lastName?: string; phone?: string };
@@ -33,6 +34,28 @@ export default function AccountScreen() {
   const [loading, setLoading] = useState(!user);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const profileRef = useRef<ProfileUser | null>((user as ProfileUser | null) ?? null);
+  const unauthorizedHandledRef = useRef(false);
+
+  const handleUnauthorized = useCallback(async () => {
+    if (unauthorizedHandledRef.current) {
+      return;
+    }
+
+    unauthorizedHandledRef.current = true;
+    await logout();
+    profileRef.current = null;
+    setProfile(null);
+    setError("Oturumun sona erdi. Lütfen tekrar giriş yap.");
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.reset({
+      index: 0,
+      routes: [{ name: ROUTES.HOME }],
+    });
+  }, [logout, navigation]);
 
   const loadProfile = useCallback(async () => {
     if (!token) {
@@ -41,29 +64,40 @@ export default function AccountScreen() {
       return;
     }
 
-    const hasProfile = Boolean(profile);
+    const hasProfile = Boolean(profileRef.current);
     setError(null);
     hasProfile ? setRefreshing(true) : setLoading(true);
 
     try {
       const me = await refreshUser();
-      setProfile((me as ProfileUser | null) ?? null);
+      const nextProfile = (me as ProfileUser | null) ?? null;
+      profileRef.current = nextProfile;
+      setProfile(nextProfile);
     } catch (e) {
+      const normalizedError = normalizeApiError(e);
+      if (normalizedError.status === 401) {
+        await handleUnauthorized();
+        return;
+      }
       const message = e instanceof Error ? e.message : "Hesap bilgileri şu anda alınamadı.";
       setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, profile, refreshUser]);
+  }, [token, refreshUser, handleUnauthorized]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [loadProfile])
+  );
 
   useEffect(() => {
-    setProfile((user as ProfileUser | null) ?? null);
+    const nextProfile = (user as ProfileUser | null) ?? null;
+    profileRef.current = nextProfile;
+    setProfile(nextProfile);
   }, [user]);
-
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
 
   const fullName = useMemo(() => (profile ? getFullName(profile) : "-"), [profile]);
 
