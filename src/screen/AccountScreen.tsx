@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -30,13 +30,13 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function AccountScreen() {
   const navigation = useNavigation<Navigation>();
-  const { user, token, logout, refreshUser } = useAuth();
-  const [profile, setProfile] = useState<ProfileUser | null>((user as ProfileUser | null) ?? null);
-  const [loading, setLoading] = useState(!user);
+  const { token, logout, refreshUser } = useAuth();
+  const [profile, setProfile] = useState<ProfileUser | null>(null);
+  const [loading, setLoading] = useState(Boolean(token));
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
-  const profileRef = useRef<ProfileUser | null>((user as ProfileUser | null) ?? null);
+  const profileRef = useRef<ProfileUser | null>(null);
   const unauthorizedHandledRef = useRef(false);
 
   const handleUnauthorized = useCallback(async () => {
@@ -49,20 +49,16 @@ export default function AccountScreen() {
     profileRef.current = null;
     setProfile(null);
     setError("Oturumun sona erdi. Lütfen tekrar giriş yap.");
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
-    }
-    navigation.reset({
-      index: 0,
-      routes: [{ name: ROUTES.HOME }],
-    });
-  }, [logout, navigation]);
+    setShowAuthGate(true);
+  }, [logout]);
 
   const loadProfile = useCallback(async () => {
     if (!token) {
+      setProfile(null);
       setError("Hesap bilgileri için giriş yapman gerekiyor.");
       setLoading(false);
+      setRefreshing(false);
+      setShowAuthGate(true);
       return;
     }
 
@@ -75,6 +71,7 @@ export default function AccountScreen() {
       const nextProfile = (me as ProfileUser | null) ?? null;
       profileRef.current = nextProfile;
       setProfile(nextProfile);
+      unauthorizedHandledRef.current = false;
     } catch (e) {
       const normalizedError = normalizeApiError(e);
       if (normalizedError.status === 401) {
@@ -95,20 +92,12 @@ export default function AccountScreen() {
     }, [loadProfile])
   );
 
-  useEffect(() => {
-    const nextProfile = (user as ProfileUser | null) ?? null;
-    profileRef.current = nextProfile;
-    setProfile(nextProfile);
-  }, [user]);
-
   const fullName = useMemo(() => (profile ? getFullName(profile) : "-"), [profile]);
 
-
-  const handleAuthGateLogin = useCallback(async () => {
+  const handleAuthGateLogin = useCallback(() => {
     setShowAuthGate(false);
-    await logout();
     navigation.navigate(ROUTES.LOGIN);
-  }, [logout, navigation]);
+  }, [navigation]);
 
   const handleAddressesPress = useCallback(() => {
     if (!token) {
@@ -183,9 +172,11 @@ export default function AccountScreen() {
         {error ? (
           <View style={sharedStyles.selectionCard}>
             <Text style={sharedStyles.noProductText}>{error}</Text>
-            <TouchableOpacity style={[sharedStyles.primaryButton, { marginTop: 12 }]} onPress={loadProfile}>
-              <Text style={sharedStyles.primaryButtonText}>Tekrar Dene</Text>
-            </TouchableOpacity>
+            {!unauthorizedHandledRef.current ? (
+              <TouchableOpacity style={[sharedStyles.primaryButton, { marginTop: 12 }]} onPress={loadProfile}>
+                <Text style={sharedStyles.primaryButtonText}>Tekrar Dene</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
 

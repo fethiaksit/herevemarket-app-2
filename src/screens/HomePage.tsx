@@ -93,7 +93,7 @@ const buildOrderPayload = (
 
 export default function HomePage() {
   const navigation = useNavigation<any>();
-  const { user, token, loading: authLoading, isGuest, logout } = useAuth();
+  const { user, token, authChecked, isGuest, logout } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -129,7 +129,6 @@ export default function HomePage() {
   const [addressSubmitLoading, setAddressSubmitLoading] = useState(false);
   const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
 
@@ -180,13 +179,12 @@ export default function HomePage() {
   }, [loadFirstPage]);
 
   useEffect(() => {
-    if (authLoading) {
+    if (!authChecked) {
       return;
     }
 
-    setAuthChecked(true);
     setShowAuthGate(!user);
-  }, [authLoading, user]);
+  }, [authChecked, user]);
 
   const handleAuthGateLogin = useCallback(async () => {
     setShowAuthGate(false);

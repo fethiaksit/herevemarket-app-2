@@ -30,10 +30,8 @@ export async function registerUser(payload: RegisterRequest) {
   });
 }
 
-export async function getCurrentUser(token: string) {
+export async function getCurrentUser(accessToken: string) {
   return apiFetch<User>("/auth/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    accessToken,
   });
 }
