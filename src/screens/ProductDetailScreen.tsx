@@ -9,7 +9,7 @@ import {
   SafeAreaView 
 } from "react-native";
 import { buildImageUrl } from "../utils/buildImageUrl";
-import { Heart } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Ana dosyadaki Type ile uyumlu olması için
 export interface Product {
@@ -74,7 +74,11 @@ export const ProductDetailScreen: React.FC<Props> = ({
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Ürün Detayı</Text>
         <TouchableOpacity style={styles.favoriteHeaderBtn} onPress={onToggleFavorite}>
-          <Heart size={20} color={isFavorite ? THEME.danger : THEME.textDark} fill={isFavorite ? THEME.danger : "transparent"} />
+          <Ionicons
+            name={isFavorite ? "heart" : "heart-outline"}
+            size={20}
+            color={isFavorite ? THEME.danger : "#6B7280"}
+          />
         </TouchableOpacity> 
       </View>
 
