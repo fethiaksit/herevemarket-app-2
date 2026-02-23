@@ -69,7 +69,6 @@ import HomeSlider from "./home/HomeSlider";
 import BrandScroller from "./home/BrandScroller";
 import AuthGateSheet from "../components/AuthGateSheet";
 import BottomSheetModal from "../components/BottomSheetModal";
-import AppHeader from "../components/AppHeader";
 
 const resolvePaymentMethod = (payment: PaymentMethod): "cash" | "card" => {
   const normalized = String(payment.label || payment.id || "").toLowerCase();
@@ -839,8 +838,6 @@ export default function HomePage() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary }}>
       <StatusBar barStyle="light-content" backgroundColor={THEME.primary} />
-
-      <AppHeader title="Anasayfa" showBack={false} />
 
       <HomeHeader
         isCategoryScreen={isCategoryScreen}
