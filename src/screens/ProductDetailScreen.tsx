@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { buildImageUrl } from "../utils/buildImageUrl";
 import { Ionicons } from "@expo/vector-icons";
+import { getEffectivePrice } from "../utils/getEffectivePrice";
 
 // Ana dosyadaki Type ile uyumlu olması için
 export interface Product {
@@ -66,8 +67,8 @@ export const ProductDetailScreen: React.FC<Props> = ({
       ? product.description
       : "Bu ürün için açıklama bulunmamaktadır.";
   const imageUrl = product.imagePath ? buildImageUrl(product.imagePath) : product.image ?? "";
-  const isOnSale = Boolean(product.saleEnabled) && Number(product.salePrice) > 0 && Number(product.salePrice) < Number(product.price);
-  const activePrice = isOnSale ? Number(product.salePrice) : Number(product.price);
+  const activePrice = getEffectivePrice(product);
+  const isOnSale = activePrice < Number(product.price);
 
   return (
     <SafeAreaView style={styles.safeArea}>

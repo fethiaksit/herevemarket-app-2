@@ -24,6 +24,7 @@ import { ProductDetailScreen } from "./ProductDetailScreen";
 // --- HOOKS / UTILS / API ---
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../utils/cartPrice";
+import { getEffectivePrice } from "../utils/getEffectivePrice";
 import { buildImageUrl } from "../utils/buildImageUrl";
 import { getProducts } from "../services/api/products";
 import { getCategories, CategoryDto } from "../services/api/categories";
@@ -80,9 +81,10 @@ const buildOrderPayload = (
   payment: PaymentMethod,
   guestContact?: { fullName: string; phone: string; email?: string }
 ): GuestOrderPayload | AuthOrderPayload => {
-  const items = cartDetails.map(({ product, quantity }) => ({
+  const items = cartDetails.map(({ product, quantity, unitPrice }) => ({
     productId: String(product.id),
     quantity,
+    price: unitPrice,
   }));
 
   return {
@@ -407,15 +409,17 @@ export default function HomePage() {
     () =>
       cart
         .map((item) => {
-          const p = products.find((x) => x.id === item.id);
-          return p ? { product: p, quantity: item.quantity } : null;
+          const p = products.find((x) => x.id === item.productId);
+          return p
+            ? { product: p, quantity: item.quantity, unitPrice: item.unitPrice, title: item.title }
+            : null;
         })
         .filter(Boolean) as CartLineItem[],
     [cart, products]
   );
 
   const cartTotal = useMemo(
-    () => cartDetails.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    () => cartDetails.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [cartDetails]
   );
 
@@ -428,7 +432,11 @@ export default function HomePage() {
         Alert.alert("Bu ürün stokta bulunmuyor");
         return;
       }
-      increase(productId);
+      increase({
+        productId: product.id,
+        title: product.name,
+        unitPrice: getEffectivePrice(product),
+      });
     },
     [increase, isOutOfStock, products]
   );
@@ -473,8 +481,8 @@ export default function HomePage() {
     const outOfStock = isOutOfStock(urun);
     const isFav = isFavorite(urun.id);
     const imageUrl = urun.imagePath ? buildImageUrl(urun.imagePath) : urun.image ?? "";
-    const isOnSale = Boolean(urun.saleEnabled) && Number(urun.salePrice) > 0 && Number(urun.salePrice) < Number(urun.price);
-    const activePrice = isOnSale ? Number(urun.salePrice) : Number(urun.price);
+    const activePrice = getEffectivePrice(urun);
+    const isOnSale = activePrice < Number(urun.price);
 
     return (
       <TouchableOpacity

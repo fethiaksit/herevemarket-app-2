@@ -67,7 +67,7 @@ export default function CartScreen({
                       {item.product.name}
                     </Text>
                     <Text style={styles.cartItemSinglePrice}>
-                      {formatPrice(item.product.price)}
+                      {formatPrice(item.unitPrice)}
                     </Text>
                   </View>
                   
@@ -99,7 +99,7 @@ export default function CartScreen({
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.cartItemTotalPrice}>
-                      {formatPrice(item.product.price * item.quantity)}
+                      {formatPrice(item.unitPrice * item.quantity)}
                     </Text>
                   </View>
                 </View>

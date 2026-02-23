@@ -11,6 +11,7 @@ import { MainStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
 import { formatPrice } from "../utils/cartPrice";
 import { buildImageUrl } from "../utils/buildImageUrl";
+import { getEffectivePrice } from "../utils/getEffectivePrice";
 import { ProductDto } from "../services/api/products";
 
 type Navigation = NativeStackNavigationProp<MainStackParamList>;
@@ -70,16 +71,16 @@ export default function FavoritesScreen() {
               <View style={styles.productInfoContainer}>
                 <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
                 <View style={styles.productBottomRow}>
-                  <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+                  <Text style={styles.productPrice}>{formatPrice(getEffectivePrice(item))}</Text>
                   {qty === 0 ? (
-                    <TouchableOpacity style={styles.addButton} onPress={() => increase(item.id)}>
+                    <TouchableOpacity style={styles.addButton} onPress={() => increase({ productId: item.id, title: item.name, unitPrice: getEffectivePrice(item) })}>
                       <Text style={styles.addButtonText}>EKLE</Text>
                     </TouchableOpacity>
                   ) : (
                     <View style={styles.counterContainer}>
                       <TouchableOpacity onPress={() => decrease(item.id)} style={styles.counterBtn}><Text style={styles.counterBtnText}>-</Text></TouchableOpacity>
                       <Text style={styles.counterValue}>{qty}</Text>
-                      <TouchableOpacity onPress={() => increase(item.id)} style={styles.counterBtn}><Text style={styles.counterBtnText}>+</Text></TouchableOpacity>
+                      <TouchableOpacity onPress={() => increase({ productId: item.id, title: item.name, unitPrice: getEffectivePrice(item) })} style={styles.counterBtn}><Text style={styles.counterBtnText}>+</Text></TouchableOpacity>
                     </View>
                   )}
                 </View>

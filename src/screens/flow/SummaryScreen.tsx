@@ -28,7 +28,7 @@ export default function SummaryScreen({ cartDetails, total, address, payment, on
             {cartDetails.map((item: CartLineItem) => (
                 <View key={item.product.id} style={styles.summaryItemRow}>
                     <Text style={styles.summaryItemName}>{item.quantity}x {item.product.name}</Text>
-                    <Text style={styles.summaryItemPrice}>{formatPrice(item.product.price * item.quantity)}</Text>
+                    <Text style={styles.summaryItemPrice}>{formatPrice(item.unitPrice * item.quantity)}</Text>
                 </View>
             ))}
             <View style={styles.divider} />

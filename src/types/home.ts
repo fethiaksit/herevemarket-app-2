@@ -22,6 +22,6 @@ export type Screen =
   | "success"
   | "productDetail";
 
-export type CartLineItem = { product: Product; quantity: number };
+export type CartLineItem = { product: Product; quantity: number; unitPrice: number; title: string };
 
 export type LegalUrlKey = "about" | "ssl" | "returns" | "privacy" | "distance";

@@ -61,7 +61,7 @@ export default function CartSheetContent({
                     <Text style={styles.cartItemName} numberOfLines={2}>
                       {item.product.name}
                     </Text>
-                    <Text style={styles.cartItemSinglePrice}>{formatPrice(item.product.price)}</Text>
+                    <Text style={styles.cartItemSinglePrice}>{formatPrice(item.unitPrice)}</Text>
                   </View>
 
                   <View style={styles.cartItemActions}>
@@ -80,7 +80,7 @@ export default function CartSheetContent({
                         </Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.cartItemTotalPrice}>{formatPrice(item.product.price * item.quantity)}</Text>
+                    <Text style={styles.cartItemTotalPrice}>{formatPrice(item.unitPrice * item.quantity)}</Text>
                   </View>
                 </View>
               );
