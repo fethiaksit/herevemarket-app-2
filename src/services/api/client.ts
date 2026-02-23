@@ -103,6 +103,10 @@ export function normalizeApiError(error: unknown): ApiErrorShape {
 }
 
 function safeErrorMessage(rawBody: string | undefined, status: number, isJson: boolean, url: string, data?: unknown): string {
+  if (status === 401 && isInvalidCredentialsError(data)) {
+    return "E-posta veya şifre hatalı.";
+  }
+
   if (isJson && data && typeof data === "object") {
     const responseData = data as { message?: string; error?: string };
     if (typeof responseData.message === "string") return responseData.message;
@@ -120,4 +124,16 @@ function safeErrorMessage(rawBody: string | undefined, status: number, isJson: b
   }
 
   return `Request failed with status ${status}. Body: ${rawBody}`;
+}
+
+function isInvalidCredentialsError(data?: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+
+  const responseData = data as { message?: string; error?: string };
+  const message = [responseData.message, responseData.error]
+    .filter((item): item is string => typeof item === "string")
+    .join(" ")
+    .toLowerCase();
+
+  return message.includes("invalid credentials") || message.includes("wrong password") || message.includes("invalid password");
 }

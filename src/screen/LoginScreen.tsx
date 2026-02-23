@@ -1,17 +1,17 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
-import { normalizeApiError } from "../services/api/client";
 import { ROUTES } from "../navigation/routes";
 
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
-  const { login, loading } = useAuth();
+  const { login, loading, token, authChecked } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const handledInitialAuthRedirect = useRef(false);
 
   const isSubmitDisabled = useMemo(() => loading, [loading]);
 
@@ -30,26 +30,44 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       return;
     }
 
-    try {
-      await login(email.trim(), password);
-    } catch (error) {
-      const { status, message } = normalizeApiError(error);
-      const normalized = message.toLowerCase();
-      const isInvalidCredentials =
-        status === 401 ||
-        status === 403 ||
-        normalized.includes("invalid credentials") ||
-        normalized.includes("wrong password");
+    const result = await login(email.trim(), password);
 
-      if (isInvalidCredentials) {
-        Alert.alert("Giriş başarısız", "E-posta veya şifre hatalı.");
-      } else {
-        Alert.alert("Giriş başarısız", message || "Giriş sırasında bir hata oluştu.");
-      }
-
-      console.error("[Login] login failed", error);
+    if (result.ok) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: ROUTES.HOME }],
+      });
+      return;
     }
+
+    const normalized = result.message.toLowerCase();
+    const isInvalidCredentials =
+      result.status === 401 ||
+      result.status === 403 ||
+      normalized.includes("invalid credentials") ||
+      normalized.includes("wrong password");
+
+    if (isInvalidCredentials) {
+      Alert.alert("Giriş başarısız", "E-posta veya şifre hatalı.");
+      return;
+    }
+
+    Alert.alert("Giriş başarısız", result.message || "Giriş sırasında bir hata oluştu.");
   };
+
+  useEffect(() => {
+    if (!authChecked || handledInitialAuthRedirect.current) {
+      return;
+    }
+
+    handledInitialAuthRedirect.current = true;
+    if (token) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: ROUTES.HOME }],
+      });
+    }
+  }, [authChecked, navigation, token]);
 
   return (
     <SafeAreaView style={styles.container}>

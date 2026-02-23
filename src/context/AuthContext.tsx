@@ -10,7 +10,7 @@ export type AuthContextValue = {
   loading: boolean;
   authChecked: boolean;
   isGuest: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ ok: true } | { ok: false; message: string; status: number }>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => Promise<void>;
@@ -70,10 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(response.accessToken);
       setUser(me);
       setIsGuest(false);
+      return { ok: true } as const;
     } catch (error) {
       const normalizedError = normalizeApiError(error);
-      console.error("[Auth] login failed", normalizedError);
-      throw error;
+      return {
+        ok: false,
+        message: normalizedError.message,
+        status: normalizedError.status,
+      } as const;
     } finally {
       setLoading(false);
     }
