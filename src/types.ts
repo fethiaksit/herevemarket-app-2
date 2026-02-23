@@ -42,6 +42,7 @@ export type Address = {
 export type OrderItemPayload = {
   productId: string;
   quantity: number;
+  price: number;
 };
 
 export type GuestOrderPayload = {

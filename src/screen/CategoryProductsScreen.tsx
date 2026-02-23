@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../utils/cartPrice";
 import { buildImageUrl } from "../utils/buildImageUrl";
+import { getEffectivePrice } from "../utils/getEffectivePrice";
 import { RootStackParamList } from "../navigation/types";
 import { styles } from "../styles/home.styles";
 import { ProductDto } from "../services/api/products";
@@ -45,7 +46,7 @@ export default function CategoryProductsScreen() {
       Alert.alert("Bu ürün stokta bulunmuyor");
       return;
     }
-    increase(product.id);
+    increase({ productId: product.id, title: product.name, unitPrice: getEffectivePrice(product) });
   };
 
   return (
@@ -99,7 +100,7 @@ export default function CategoryProductsScreen() {
 
                   <View style={styles.productFooter}>
                     <Text style={styles.productPrice}>
-                      {formatPrice(urun.price)}
+                      {formatPrice(getEffectivePrice(urun))}
                     </Text>
 
                     {quantity === 0 ? (

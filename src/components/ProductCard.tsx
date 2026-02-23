@@ -2,6 +2,7 @@ import React from "react";
 import { Image, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { Product } from "../types";
 import { buildImageUrl } from "../utils/buildImageUrl";
+import { getEffectivePrice } from "../utils/getEffectivePrice";
 
 type Props = {
   product: Product;
@@ -28,6 +29,8 @@ export const ProductCard: React.FC<Props> = ({
   const cardStyles = [styles.card, isOutOfStock && styles.cardDisabled, containerStyle];
   const imageUrl = product.imagePath ? buildImageUrl(product.imagePath) : product.image ?? "";
 
+  const effectivePrice = getEffectivePrice(product);
+
   const content = (
     <>
       {showImage && imageUrl ? (
@@ -43,7 +46,7 @@ export const ProductCard: React.FC<Props> = ({
         ) : null}
         {isOutOfStock ? <Text style={styles.stockBadge}>TÜKENDİ</Text> : null}
       </View>
-      <Text style={styles.price}>{product.price.toFixed(2)} ₺</Text>
+      <Text style={styles.price}>{effectivePrice.toFixed(2)} ₺</Text>
 
       {showActions ? (
         <View style={styles.row}>
