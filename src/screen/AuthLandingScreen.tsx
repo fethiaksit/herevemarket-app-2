@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
+import AppHeader from "../components/AppHeader";
 
 export type AuthLandingProps = NativeStackScreenProps<AuthStackParamList, "AuthLanding">;
 
@@ -16,6 +17,7 @@ export default function AuthLandingScreen({ navigation }: AuthLandingProps) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppHeader title="Hereve Market" showBack={false} />
       <View style={styles.content}>
         <Text style={styles.title}>Hereve Market</Text>
         <Text style={styles.subtitle}>Hemen giriş yapın veya üye olmadan devam edin.</Text>
@@ -40,11 +42,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f6f7fb",
-    justifyContent: "center",
   },
   content: {
+    flex: 1,
     paddingHorizontal: 24,
     alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: 28,

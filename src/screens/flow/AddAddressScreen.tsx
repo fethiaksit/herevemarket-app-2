@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { styles } from "../styles";
+import AppHeader from "../../components/AppHeader";
 
 export default function AddAddressScreen({ onSave, onCancel, loading = false }: any) {
   const [title, setTitle] = useState("");
@@ -11,15 +12,7 @@ export default function AddAddressScreen({ onSave, onCancel, loading = false }: 
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onCancel} disabled={isDisabled}>
-          <Text style={styles.headerBackText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}>
-          <Text style={styles.headerTitle}>Adres Ekle</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Adres" onBack={onCancel} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.inputLabel}>Adres Başlığı</Text>
         <TextInput style={styles.input} placeholder="Örn: Evim" value={title} onChangeText={setTitle} editable={!isDisabled} />

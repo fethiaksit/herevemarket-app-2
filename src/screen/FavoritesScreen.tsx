@@ -6,6 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../hooks/useCart";
 import { useFavorites } from "../context/FavoritesContext";
 import { styles } from "../screens/styles";
+import AppHeader from "../components/AppHeader";
 import { THEME } from "../constants/theme";
 import { MainStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
@@ -30,14 +31,7 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.headerBackText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}>
-          <Text style={styles.headerTitle}>Favoriler</Text>
-        </View>
-      </View>
+      <AppHeader title="Favoriler" />
 
       {loading ? <ActivityIndicator size="small" color={THEME.primary} style={{ marginTop: 20 }} /> : null}
 

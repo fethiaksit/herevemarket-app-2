@@ -8,6 +8,7 @@ import { MainStackParamList } from "../navigation/types";
 import { styles as sharedStyles } from "../screens/styles";
 import { THEME } from "../constants/theme";
 import AuthGateSheet from "../components/AuthGateSheet";
+import AppHeader from "../components/AppHeader";
 import { User } from "../types";
 import { normalizeApiError } from "../services/api/client";
 
@@ -135,6 +136,7 @@ export default function AccountScreen() {
   if (loading) {
     return (
       <SafeAreaView style={sharedStyles.container}>
+        <AppHeader title="Profil / Hesabım" />
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="small" color={THEME.primary} />
         </View>
@@ -144,14 +146,7 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={sharedStyles.container}>
-      <View style={sharedStyles.headerBar}>
-        <TouchableOpacity style={sharedStyles.headerBackButton} onPress={() => navigation.goBack()}>
-          <Text style={sharedStyles.headerBackText}>←</Text>
-        </TouchableOpacity>
-        <View style={sharedStyles.headerCenterAbsolute}>
-          <Text style={sharedStyles.headerTitle}>Hesabım</Text>
-        </View>
-      </View>
+      <AppHeader title="Profil / Hesabım" />
 
       <ScrollView contentContainerStyle={sharedStyles.scrollContent}>
         {refreshing ? <ActivityIndicator size="small" color={THEME.primary} style={{ marginBottom: 12 }} /> : null}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from "react-native";
 import { styles } from "../styles";
+import AppHeader from "../../components/AppHeader";
 
 export default function AddCardScreen({ onSave, onCancel }: any) {
   const [holder, setHolder] = useState("");
@@ -9,11 +10,7 @@ export default function AddCardScreen({ onSave, onCancel }: any) {
   const [cvv, setCvv] = useState("");
   return (
     <View style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onCancel}><Text style={styles.headerBackText}>←</Text></TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}><Text style={styles.headerTitle}>Kart Ekle</Text></View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Kartlar" onBack={onCancel} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.inputLabel}>Kart Üzerindeki İsim</Text>
         <TextInput style={styles.input} placeholder="Ad Soyad" value={holder} onChangeText={setHolder} />

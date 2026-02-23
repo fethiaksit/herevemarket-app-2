@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
 import { ApiFetchError } from "../services/api/client";
+import AppHeader from "../components/AppHeader";
 
 export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Register">;
 
@@ -45,7 +46,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
+      <AppHeader title="Kayıt Ol" />
+      <View style={styles.content}>
+        <View style={styles.card}>
         <Text style={styles.title}>Üye Ol</Text>
         <TextInput style={styles.input} placeholder="Ad Soyad" value={name} onChangeText={setName} />
         <TextInput
@@ -69,6 +72,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         <TouchableOpacity onPress={() => navigation.navigate(ROUTES.LOGIN)}>
           <Text style={styles.footerText}>Zaten hesabın var mı? Giriş yap</Text>
         </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -78,6 +82,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f6f7fb",
+  },
+  content: {
+    flex: 1,
     justifyContent: "center",
   },
   card: {

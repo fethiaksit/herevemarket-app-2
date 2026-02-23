@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { buildImageUrl } from "../utils/buildImageUrl";
 import { Ionicons } from "@expo/vector-icons";
+import AppHeader from "../components/AppHeader";
 import { getEffectivePrice } from "../utils/getEffectivePrice";
 
 // Ana dosyadaki Type ile uyumlu olması için
@@ -72,19 +73,15 @@ export const ProductDetailScreen: React.FC<Props> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ürün Detayı</Text>
+      <AppHeader title="Ürün Detayı" onBack={onBack} />
+      <View style={styles.headerActions}>
         <TouchableOpacity style={styles.favoriteHeaderBtn} onPress={onToggleFavorite}>
           <Ionicons
             name={isFavorite ? "heart" : "heart-outline"}
             size={20}
             color={isFavorite ? THEME.danger : "#6B7280"}
           />
-        </TouchableOpacity> 
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -182,11 +179,13 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: THEME.background },
   container: { flex: 1 },
   content: { paddingBottom: 100 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, height: 60, backgroundColor: THEME.white, borderBottomWidth: 1, borderColor: "#E5E7EB" },
-  backButton: { padding: 10 },
+  headerActions: {
+    alignItems: "flex-end",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: THEME.white,
+  },
   favoriteHeaderBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  backText: { fontSize: 24, color: THEME.primary, fontWeight: "bold" },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: THEME.textDark },
   imageContainer: { backgroundColor: THEME.white, height: 300, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   image: { width: "80%", height: "80%" },
   infoCard: { backgroundColor: THEME.white, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: 400, marginTop: -20, shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 5 },
