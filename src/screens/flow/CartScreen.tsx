@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CART_FOOTER_HEIGHT, placeholderImage } from "../../constants/mockData";
 import { styles } from "../styles";
 import { formatPrice } from "../../utils/cartPrice";
 import { CartLineItem, Product } from "../../types/home";
 import { THEME } from "../../constants/theme";
 import { buildImageUrl } from "../../utils/buildImageUrl";
+import AppHeader from "../../components/AppHeader";
 
 export default function CartScreen({
   cartDetails,
@@ -25,20 +25,11 @@ export default function CartScreen({
   onDecrease: (id: string) => void;
   isOutOfStock: (product: Product) => boolean;
 }) {
-  const insets = useSafeAreaInsets();
   const isCheckoutDisabled = cartDetails.length === 0;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.headerBar, { paddingTop: insets.top, height: 60 + insets.top }]}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onBack}>
-          <Text style={styles.headerBackText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}>
-           <Text style={styles.headerTitle}>Sepetim</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Sepet" onBack={onBack} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: CART_FOOTER_HEIGHT + 20 }}>
         {cartDetails.length === 0 ? (

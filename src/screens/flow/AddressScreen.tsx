@@ -1,8 +1,8 @@
 import React from "react";
 import { ActivityIndicator, View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "../styles";
 import { Address } from "../../types";
+import AppHeader from "../../components/AppHeader";
 
 const getAddressId = (address: Address, index: number) => String(address._id ?? address.id ?? `${address.title}-${index}`);
 
@@ -21,15 +21,9 @@ export default function AddressScreen({
 }: any) {
   // Eğer addresses undefined gelirse boş diziye çevir
   const safeAddresses = Array.isArray(addresses) ? addresses : [];
-  const insets = useSafeAreaInsets();
-
   return (
     <View style={styles.container}>
-      <View style={[styles.headerBar, { paddingTop: insets.top, height: 60 + insets.top }]}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onBack}><Text style={styles.headerBackText}>←</Text></TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}><Text style={styles.headerTitle}>Teslimat Adresi</Text></View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Kayıtlı Adres / Adres" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? <ActivityIndicator style={{ marginBottom: 12 }} /> : null}
         {showManageButton ? (

@@ -18,6 +18,7 @@ import { Address } from "../types";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
 import { normalizeApiError } from "../services/api/client";
 import { ROUTES } from "../navigation/routes";
+import AppHeader from "../components/AppHeader";
 
 export type AddressListProps = NativeStackScreenProps<MainStackParamList, "AddressList">;
 
@@ -194,11 +195,9 @@ export default function AddressListScreen({ navigation }: AddressListProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Adreslerim</Text>
+      <AppHeader title="Kayıtlı Adres / Adres" />
+
+      <View style={styles.headerActions}>
         <TouchableOpacity onPress={handleLogout}>
           <Text style={styles.logoutText}>Çıkış</Text>
         </TouchableOpacity>
@@ -250,15 +249,12 @@ export default function AddressListScreen({ navigation }: AddressListProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
-  header: {
+  headerActions: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
   },
-  backText: { fontSize: 24, color: "#111827" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
   logoutText: { color: "#EF4444", fontWeight: "600" },
   spinner: { marginVertical: 8 },
   content: { flex: 1, paddingHorizontal: 16 },

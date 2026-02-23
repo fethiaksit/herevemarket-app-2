@@ -1,20 +1,14 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "../styles";
 import { formatPrice } from "../../utils/cartPrice";
 import { CartLineItem } from "../../types/home";
+import AppHeader from "../../components/AppHeader";
 
 export default function SummaryScreen({ cartDetails, total, address, payment, onBack, onSubmit, onPressLegal, isSubmitting }: any) {
-  const insets = useSafeAreaInsets();
-
   return (
     <View style={styles.container}>
-      <View style={[styles.headerBar, { paddingTop: insets.top, height: 60 + insets.top }]}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onBack}><Text style={styles.headerBackText}>←</Text></TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}><Text style={styles.headerTitle}>Sipariş Özeti</Text></View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Siparişi Onayla" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.summaryCard}>
             <Text style={styles.summarySectionTitle}>Teslimat Bilgileri</Text>

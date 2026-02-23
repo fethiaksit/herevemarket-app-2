@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
+import AppHeader from "../components/AppHeader";
 
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, "Login">;
 
@@ -71,7 +72,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
+      <AppHeader title="Giriş Yap" />
+      <View style={styles.content}>
+        <View style={styles.card}>
         <Text style={styles.title}>Giriş Yap</Text>
         <TextInput
           style={styles.input}
@@ -99,6 +102,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <TouchableOpacity onPress={() => navigation.navigate("Register")}>
           <Text style={styles.footerText}>Hesabın yok mu? Üye ol</Text>
         </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -108,6 +112,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f6f7fb",
+  },
+  content: {
+    flex: 1,
     justifyContent: "center",
   },
   card: {

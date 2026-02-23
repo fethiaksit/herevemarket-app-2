@@ -1,19 +1,12 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { styles } from "../styles";
+import AppHeader from "../../components/AppHeader";
 
 export default function GuestAddressScreen({ address, guestInfo, errors, onChange, onGuestChange, onBack, onContinue }: any) {
   return (
     <View style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.headerBackButton} onPress={onBack}>
-          <Text style={styles.headerBackText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenterAbsolute}>
-          <Text style={styles.headerTitle}>Teslimat Adresi</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+      <AppHeader title="Kayıtlı Adres / Adres" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionHeader}>Misafir Bilgileri</Text>
         <Text style={styles.inputLabel}>Ad Soyad</Text>
