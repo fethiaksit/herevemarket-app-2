@@ -22,7 +22,13 @@ export async function login(credentials: LoginRequest) {
     body: JSON.stringify(credentials),
   });
 
+  if (!response?.accessToken) {
+    console.error("[Auth] Login succeeded but accessToken is missing", { email: credentials.email });
+    throw new Error("Giriş başarılı görünüyor ancak oturum anahtarı alınamadı. Lütfen tekrar deneyin.");
+  }
+
   await tokenStorage.setAccessToken(response.accessToken);
+  console.log("[Auth] token saved");
   return response;
 }
 

@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetchAuthed } from "./authedClient";
 import { Address } from "../../types";
 
 export type AddressPayload = Pick<Address, "title" | "detail" | "note" | "isDefault">;
@@ -16,8 +16,8 @@ function normalizeAddress(address: Address, index: number): Address {
   };
 }
 
-export async function getAddresses(accessToken: string): Promise<Address[]> {
-  const res = await apiFetch<GetAddressesResponse>("/user/addresses", {
+export async function getAddresses(accessToken?: string | null): Promise<Address[]> {
+  const res = await apiFetchAuthed<GetAddressesResponse>("/user/addresses", {
     accessToken,
   });
 
@@ -25,8 +25,8 @@ export async function getAddresses(accessToken: string): Promise<Address[]> {
   return safeAddresses.map((address, index) => normalizeAddress(address, index));
 }
 
-export async function createAddress(accessToken: string, payload: AddressPayload): Promise<Address> {
-  const created = await apiFetch<Address>("/user/addresses", {
+export async function createAddress(accessToken: string | null | undefined, payload: AddressPayload): Promise<Address> {
+  const created = await apiFetchAuthed<Address>("/user/addresses", {
     method: "POST",
     accessToken,
     body: JSON.stringify(payload),
@@ -35,8 +35,8 @@ export async function createAddress(accessToken: string, payload: AddressPayload
   return normalizeAddress(created, Date.now());
 }
 
-export async function updateAddress(accessToken: string, id: string, payload: AddressPayload): Promise<Address> {
-  const updated = await apiFetch<Address>(`/user/addresses/${id}`, {
+export async function updateAddress(accessToken: string | null | undefined, id: string, payload: AddressPayload): Promise<Address> {
+  const updated = await apiFetchAuthed<Address>(`/user/addresses/${id}`, {
     method: "PUT",
     accessToken,
     body: JSON.stringify(payload),
@@ -45,8 +45,8 @@ export async function updateAddress(accessToken: string, id: string, payload: Ad
   return normalizeAddress(updated, Date.now());
 }
 
-export async function deleteAddress(accessToken: string, id: string) {
-  return apiFetch<void>(`/user/addresses/${id}`, {
+export async function deleteAddress(accessToken: string | null | undefined, id: string) {
+  return apiFetchAuthed<void>(`/user/addresses/${id}`, {
     method: "DELETE",
     accessToken,
   });

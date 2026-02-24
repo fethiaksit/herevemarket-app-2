@@ -1,5 +1,7 @@
 import { apiFetch } from "./client";
 import { User } from "../../types";
+import { login as loginWithStorage } from "../auth/auth";
+import { apiFetchAuthed } from "./authedClient";
 
 export type LoginRequest = {
   email: string;
@@ -17,10 +19,7 @@ export type AuthResponse = {
 };
 
 export async function loginUser(payload: LoginRequest) {
-  return apiFetch<AuthResponse>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return loginWithStorage(payload);
 }
 
 export async function registerUser(payload: RegisterRequest) {
@@ -30,8 +29,8 @@ export async function registerUser(payload: RegisterRequest) {
   });
 }
 
-export async function getCurrentUser(accessToken: string) {
-  return apiFetch<User>("/auth/me", {
+export async function getCurrentUser(accessToken?: string | null) {
+  return apiFetchAuthed<User>("/auth/me", {
     accessToken,
   });
 }
