@@ -71,8 +71,8 @@ export type OrderPayload = {
 
 export type GuestOrderPayload = {
   items: OrderItemPayload[];
-  customer: { fullName: string; phone: string; email?: string };
-  delivery: { title?: string; detail: string; note?: string };
+  totalPrice: number;
+  customer: OrderCustomerPayload;
   paymentMethod: PaymentMethodPayload | "cash" | "card";
   couponCode?: string;
 };

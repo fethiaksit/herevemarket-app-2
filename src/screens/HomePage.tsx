@@ -74,20 +74,20 @@ import BottomSheetModal from "../components/BottomSheetModal";
 const buildGuestOrderPayload = (
   cartDetails: CartLineItem[],
   address: Address,
-  payment: PaymentMethod,
-  guestContact?: { fullName: string; phone: string; email?: string }
+  payment: PaymentMethod
 ): GuestOrderPayload => ({
-  items: cartDetails.map(({ product, quantity, unitPrice }) => ({
-    productId: String(product.id),
-    quantity,
-    price: Number(unitPrice),
-  })),
+  items: cartDetails
+    .map(({ product, quantity, unitPrice }) => ({
+      productId: String(product.id || "").trim(),
+      name: String(product.name || "").trim(),
+      quantity: Number(quantity),
+      price: Number(unitPrice),
+    }))
+    .filter((item) => item.productId && item.name && Number.isFinite(item.price) && Number.isFinite(item.quantity) && item.quantity > 0),
+  totalPrice: Number(
+    cartDetails.reduce((sum, item) => sum + Number(item.unitPrice || 0) * Number(item.quantity || 0), 0)
+  ),
   customer: {
-    fullName: (guestContact?.fullName || "Müşteri").trim(),
-    phone: (guestContact?.phone || "05550000000").trim(),
-    ...(guestContact?.email?.trim() ? { email: guestContact.email.trim() } : {}),
-  },
-  delivery: {
     title: String(address.title || "").trim(),
     detail: String(address.detail || "").trim(),
     note: String(address.note || "").trim(),
@@ -749,38 +749,70 @@ export default function HomePage() {
     }
 
     if (isGuest) {
-      const nextErrors: { fullName?: string; phone?: string; detail?: string } = {};
-      if (!guestInfo.fullName.trim()) nextErrors.fullName = "Ad Soyad zorunludur.";
-      if (!guestInfo.phone.trim()) nextErrors.phone = "Telefon zorunludur.";
+      const nextErrors: { detail?: string } = {};
+      if (!guestAddress.title.trim()) {
+        Alert.alert("Adres", "Adres başlığı zorunludur (ör. Ev, İş).");
+        return;
+      }
       if (!guestAddress.detail.trim()) nextErrors.detail = "Adres detayı zorunludur.";
       setGuestErrors(nextErrors);
       if (Object.keys(nextErrors).length) return;
     }
 
-    const selectedPayment = paymentMethods.find((p) => p.id === selectedPaymentId);
+    const selectedPayment = paymentMethods.find((p) => p.id === selectedPaymentId) ?? { id: "cash", label: "Nakit" };
     if (!selectedPayment) {
       Alert.alert("Ödeme", "Lütfen ödeme yöntemi seçin.");
       return;
     }
 
     const payload = isGuest
-      ? buildGuestOrderPayload(cartDetails, selectedAddress, selectedPayment, guestInfo)
+      ? buildGuestOrderPayload(cartDetails, selectedAddress, selectedPayment)
       : buildAuthOrderPayload(cartDetails, selectedAddress, selectedPayment);
 
+    if (!payload.items.length) {
+      Alert.alert("Sepet", "Sipariş için en az bir geçerli ürün olmalıdır.");
+      return;
+    }
+
+    const hasCustomer = Boolean(payload.customer?.title && payload.customer?.detail);
+    if (!hasCustomer) {
+      Alert.alert("Adres", "Lütfen teslimat başlığı ve açık adres bilgilerini doldurun.");
+      return;
+    }
+
+    setIsSubmittingOrder(true);
     try {
-      setIsSubmittingOrder(true);
-      const hasToken = Boolean(token);
-      console.log("[ORDER] submit", { hasToken });
-      const response = await submitOrder(payload as GuestOrderPayload | AuthOrderPayload, token);
-      setOrderId(response?.id ?? Math.floor(100000 + Math.random() * 900000).toString());
+      const accessToken = await tokenStorage.getAccessToken();
+      const hasToken = Boolean(accessToken);
+      console.log("LOG [CHECKOUT] submitStart", {
+        itemsCount: payload.items.length,
+        hasToken,
+        hasCustomer,
+        paymentMethod: payload.paymentMethod,
+      });
+
+      const response = await submitOrder(payload as GuestOrderPayload | AuthOrderPayload, accessToken ?? null);
+      const nextOrderId = response?.id ?? Math.floor(100000 + Math.random() * 900000).toString();
+
+      console.log("LOG [CHECKOUT] submitSuccess", { orderId: nextOrderId });
+
+      setOrderId(nextOrderId);
       clearCart();
       setActiveScreen("success");
     } catch (error) {
       const normalized = normalizeApiError(error);
+      console.log("LOG [CHECKOUT] submitError", {
+        status: normalized.status,
+        message: normalized.message,
+        data: normalized.data,
+      });
+
       if (normalized.status === 429) {
         Alert.alert("Sipariş", "Çok sık deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.");
       } else if (normalized.status === 409) {
         Alert.alert("Stok", normalized.message || "Bazı ürünlerde stok yetersiz.");
+      } else if (normalized.status === 400) {
+        Alert.alert("Sipariş", normalized.message || "Sipariş bilgileri eksik veya hatalı. Lütfen bilgileri kontrol edin.");
       } else {
         await handleApiError(error, "Sipariş");
       }
