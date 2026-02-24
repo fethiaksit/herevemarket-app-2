@@ -105,8 +105,10 @@ const buildAuthOrderPayload = (cartDetails: CartLineItem[], address: Address, pa
       price: Number(unitPrice),
       quantity: Number(quantity),
     }))
-    .filter((item) => item.productId && item.name),
-  totalPrice: Number(cartDetails.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)),
+    .filter((item) => item.productId && item.name && Number.isFinite(item.price) && Number.isFinite(item.quantity) && item.quantity > 0),
+  totalPrice: Number(
+    cartDetails.reduce((sum, item) => sum + Number(item.unitPrice || 0) * Number(item.quantity || 0), 0)
+  ),
   customer: {
     title: String(address.title || "").trim(),
     detail: String(address.detail || "").trim(),
@@ -490,6 +492,8 @@ export default function HomePage() {
         Alert.alert("Bu ürün stokta bulunmuyor");
         return;
       }
+
+      // Login yokken sadece local state + AsyncStorage kullanılır (protected endpoint çağrısı yok).
       increase({
         productId: product.id,
         title: product.name,
