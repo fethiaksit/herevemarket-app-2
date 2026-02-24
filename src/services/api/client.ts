@@ -37,12 +37,28 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
   }
 
   const url = `${API_BASE_URL}${path}`;
+  const method = requestOptions.method ?? "GET";
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  console.log("[apiFetch] start", { url, hasToken: !!accessToken, method });
 
   let response: Response;
   try {
-    response = await fetch(url, { ...requestOptions, headers });
-  } catch {
+    response = await fetch(url, { ...requestOptions, headers, signal: controller.signal });
+    console.log("[apiFetch] response", { url, status: response.status });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown fetch error";
+    const name = err instanceof Error ? err.name : "UnknownError";
+    console.log("[apiFetch] error", { url, message, name });
+
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new ApiFetchError(0, "İstek zaman aşımına uğradı. Lütfen tekrar deneyin.");
+    }
+
     throw new ApiFetchError(0, "İnternet bağlantısı kurulamadı. Lütfen bağlantınızı kontrol edin.");
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const rawBody = await response.text();
@@ -52,7 +68,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
 
   if (!response.ok) {
     const data = isJsonResponse ? parsedBody : rawBody;
-    const message = safeErrorMessage(rawBody, response.status, isJsonResponse, url, data);
+    const message = response.status === 401
+      ? "Oturum süreniz doldu. Lütfen tekrar giriş yapın."
+      : safeErrorMessage(rawBody, response.status, isJsonResponse, url, data);
     throw new ApiFetchError(response.status, message, data);
   }
 

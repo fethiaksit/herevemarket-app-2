@@ -160,6 +160,7 @@ export default function HomePage() {
   const [guestInfo, setGuestInfo] = useState({ fullName: "", phone: "", email: "" });
   const [guestErrors, setGuestErrors] = useState<{ fullName?: string; phone?: string; detail?: string }>({});
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
@@ -482,25 +483,54 @@ export default function HomePage() {
   const isOutOfStock = useCallback((product: Product) => !product.inStock || product.stock === 0, []);
 
   const handleIncrease = useCallback(
-    (productId: string) => {
-      const product = products.find((item) => item.id === productId);
-      if (!product) {
-        Alert.alert("Ürün", "Ürün bilgisi alınamadı.");
-        return;
-      }
-      if (isOutOfStock(product)) {
-        Alert.alert("Bu ürün stokta bulunmuyor");
+    async (productId: string) => {
+      console.log("[CART][ADD] start", { hasToken: !!token });
+      if (isAddingToCart) {
+        console.log("[CART][ADD] return", { reason: "done" });
         return;
       }
 
-      // Login yokken sadece local state + AsyncStorage kullanılır (protected endpoint çağrısı yok).
-      increase({
-        productId: product.id,
-        title: product.name,
-        unitPrice: getEffectivePrice(product),
-      });
+      setIsAddingToCart(true);
+      try {
+        const product = products.find((item) => item.id === productId);
+        if (!product) {
+          Alert.alert("Ürün", "Ürün bilgisi alınamadı.");
+          console.log("[CART][ADD] return", { reason: "done" });
+          return;
+        }
+
+        if (isOutOfStock(product)) {
+          Alert.alert("Bu ürün stokta bulunmuyor");
+          console.log("[CART][ADD] return", { reason: "done" });
+          return;
+        }
+
+        // Login yokken sadece local state + AsyncStorage kullanılır (protected endpoint çağrısı yok).
+        if (!token) {
+          increase({
+            productId: product.id,
+            title: product.name,
+            unitPrice: getEffectivePrice(product),
+          });
+          console.log("[CART][ADD] return", { reason: "no_token" });
+          return;
+        }
+
+        increase({
+          productId: product.id,
+          title: product.name,
+          unitPrice: getEffectivePrice(product),
+        });
+        console.log("[CART][ADD] return", { reason: "done" });
+      } catch (error) {
+        console.error("[CART][ADD] error", error);
+        Alert.alert("Hata", "Sepete eklenemedi.");
+      } finally {
+        setIsAddingToCart(false);
+        console.log("[CART][ADD] finally");
+      }
     },
-    [increase, isOutOfStock, products]
+    [increase, isAddingToCart, isOutOfStock, products, token]
   );
 
   // Ürün Tıklama
