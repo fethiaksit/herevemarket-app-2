@@ -131,11 +131,11 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState<number | null>(null);
-  const [isLoadingFirst, setIsLoadingFirst] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [canFetchMoreWithoutPagination, setCanFetchMoreWithoutPagination] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
 
   const products = items;
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -160,7 +160,7 @@ export default function HomePage() {
   const [guestInfo, setGuestInfo] = useState({ fullName: "", phone: "", email: "" });
   const [guestErrors, setGuestErrors] = useState<{ fullName?: string; phone?: string; detail?: string }>({});
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
@@ -170,6 +170,8 @@ export default function HomePage() {
   const categoryListRef = useRef<ScrollView | null>(null);
   const productListRef = useRef<FlatList<Product> | null>(null);
   const productListOffset = useRef(0);
+  const onEndReachedCalledDuringMomentum = useRef(true);
+  const requestedPagesRef = useRef<Set<number>>(new Set());
 
   const { width } = Dimensions.get("window");
   const slideWidth = width - 32;
@@ -218,26 +220,33 @@ export default function HomePage() {
       setItems(firstItems.length ? firstItems : fallbackProducts);
       setPage(1);
       setTotalPages(response.pagination?.totalPages ?? null);
-      setCanFetchMoreWithoutPagination(true);
+      requestedPagesRef.current = new Set([1]);
+      if (response.pagination) {
+        const reachedTotal = firstItems.length >= response.pagination.total;
+        setHasMore(!reachedTotal && firstItems.length >= limit);
+      } else {
+        setHasMore(firstItems.length >= limit);
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Ürünler alınamadı.";
       setError(message);
       setItems(fallbackProducts);
       setPage(1);
       setTotalPages(1);
-      setCanFetchMoreWithoutPagination(false);
+      setHasMore(false);
+      requestedPagesRef.current = new Set([1]);
     }
-  }, [fetchPage]);
+  }, [fetchPage, limit]);
 
   useEffect(() => {
     (async () => {
-      setIsLoadingFirst(true);
+      setProductsLoading(true);
       try {
         await loadFirstPage();
       } catch (error) {
         console.error("[Home] first page load failed", error);
       } finally {
-        setIsLoadingFirst(false);
+        setProductsLoading(false);
       }
     })();
   }, [loadFirstPage]);
@@ -257,7 +266,7 @@ export default function HomePage() {
   }, [logout, navigation]);
 
   const handleRefresh = useCallback(async () => {
-    if (isRefreshing || isLoadingFirst || isFetchingMore) return;
+    if (isRefreshing || productsLoading || isFetchingNextPage) return;
     setIsRefreshing(true);
     try {
       await loadFirstPage();
@@ -266,19 +275,25 @@ export default function HomePage() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, isLoadingFirst, isFetchingMore, loadFirstPage]);
+  }, [isRefreshing, productsLoading, isFetchingNextPage, loadFirstPage]);
 
-  const fetchMore = useCallback(async () => {
-    if (isFetchingMore || isLoadingFirst || isRefreshing) return;
-    if (totalPages !== null && page >= totalPages) return;
-    if (totalPages === null && !canFetchMoreWithoutPagination) return;
+  const fetchNextPage = useCallback(async () => {
+    console.log("[Products] fetchNextPage before", { page, isFetchingNextPage, hasMore });
+    if (isFetchingNextPage || productsLoading || isRefreshing || !hasMore) return;
+    if (totalPages !== null && page >= totalPages) {
+      setHasMore(false);
+      return;
+    }
 
     const nextPage = page + 1;
-    setIsFetchingMore(true);
+    if (requestedPagesRef.current.has(nextPage)) return;
+    requestedPagesRef.current.add(nextPage);
+    setIsFetchingNextPage(true);
 
     try {
       const response = await fetchPage(nextPage);
       const nextItems = response.items;
+      const mergedCount = items.length + nextItems.length;
 
       setItems((prev) => [...prev, ...nextItems]);
       setPage(nextPage);
@@ -286,24 +301,39 @@ export default function HomePage() {
 
       if (response.pagination) {
         setTotalPages(response.pagination.totalPages);
-      } else if (nextItems.length === 0) {
-        setCanFetchMoreWithoutPagination(false);
+        const reachedByTotal = mergedCount >= response.pagination.total;
+        const reachedByPage = nextPage >= response.pagination.totalPages;
+        const reachedByShortPage = nextItems.length < limit;
+        setHasMore(!(reachedByTotal || reachedByPage || reachedByShortPage));
+      } else {
+        setHasMore(nextItems.length >= limit);
       }
     } catch (e) {
+      requestedPagesRef.current.delete(nextPage);
       const message = e instanceof Error ? e.message : "Daha fazla ürün alınamadı.";
       setError(message);
     } finally {
-      setIsFetchingMore(false);
+      setIsFetchingNextPage(false);
+      console.log("[Products] fetchNextPage after", { page: nextPage, isFetchingNextPage: false, hasMore });
     }
   }, [
-    isFetchingMore,
-    isLoadingFirst,
+    isFetchingNextPage,
+    productsLoading,
     isRefreshing,
+    hasMore,
     totalPages,
     page,
-    canFetchMoreWithoutPagination,
     fetchPage,
+    items.length,
+    limit,
   ]);
+
+  const handleEndReached = useCallback(() => {
+    console.log("[Products] onEndReached", { page, isFetchingNextPage, hasMore });
+    if (onEndReachedCalledDuringMomentum.current) return;
+    onEndReachedCalledDuringMomentum.current = true;
+    fetchNextPage();
+  }, [fetchNextPage, hasMore, isFetchingNextPage, page]);
 
   const loadAddresses = useCallback(async () => {
     if (!token) {
@@ -485,12 +515,12 @@ export default function HomePage() {
   const handleIncrease = useCallback(
     async (productId: string) => {
       console.log("[CART][ADD] start", { hasToken: !!token });
-      if (isAddingToCart) {
+      if (cartLoading) {
         console.log("[CART][ADD] return", { reason: "done" });
         return;
       }
 
-      setIsAddingToCart(true);
+      setCartLoading(true);
       try {
         const product = products.find((item) => item.id === productId);
         if (!product) {
@@ -526,11 +556,11 @@ export default function HomePage() {
         console.error("[CART][ADD] error", error);
         Alert.alert("Hata", "Sepete eklenemedi.");
       } finally {
-        setIsAddingToCart(false);
+        setCartLoading(false);
         console.log("[CART][ADD] finally");
       }
     },
-    [increase, isAddingToCart, isOutOfStock, products, token]
+    [increase, cartLoading, isOutOfStock, products, token]
   );
 
   // Ürün Tıklama
@@ -806,13 +836,13 @@ export default function HomePage() {
   const showTopSlider = !isCategoryScreen && searchQuery.trim().length === 0;
 
   const listFooter = useMemo(() => {
-    if (!isFetchingMore) return null;
+    if (!isFetchingNextPage) return null;
     return (
       <View style={{ paddingVertical: 16 }}>
         <ActivityIndicator size="small" color={THEME.primary} />
       </View>
     );
-  }, [isFetchingMore]);
+  }, [isFetchingNextPage]);
 
   const listHeader = useMemo(
     () => (
@@ -832,12 +862,12 @@ export default function HomePage() {
 
         <View style={styles.productsSection}>
           <Text style={styles.sectionTitle}>{pageTitle}</Text>
-          {isLoadingFirst ? <ActivityIndicator size="small" color={THEME.primary} /> : null}
+          {productsLoading ? <ActivityIndicator size="small" color={THEME.primary} /> : null}
           {error ? <Text style={styles.noProductText}>{error}</Text> : null}
         </View>
       </>
     ),
-    [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
+    [showTopSlider, slideWidth, activeDealIndex, pageTitle, productsLoading, error]
   );
 
   if (!authChecked) {
@@ -965,13 +995,16 @@ export default function HomePage() {
           renderItem={({ item }) => renderProductCard(item)}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          onEndReached={fetchMore}
+          onMomentumScrollBegin={() => {
+            onEndReachedCalledDuringMomentum.current = false;
+          }}
+          onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
           ListHeaderComponent={listHeader}
           ListFooterComponent={listFooter}
-          ListEmptyComponent={!isLoadingFirst ? <Text style={styles.noProductText}>Bu kategoride henüz ürün bulunmuyor.</Text> : null}
+          ListEmptyComponent={!productsLoading ? <Text style={styles.noProductText}>Bu kategoride henüz ürün bulunmuyor.</Text> : null}
           onScroll={(event) => {
             productListOffset.current = event.nativeEvent.contentOffset.y;
           }}
