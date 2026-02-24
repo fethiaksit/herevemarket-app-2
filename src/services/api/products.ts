@@ -137,8 +137,10 @@ const mapPagination = (pagination?: RawPagination) => {
 };
 
 export async function getProducts(query: ProductsQuery = {}): Promise<ProductsResult> {
-  console.log("[getProducts] request started");
-  console.log("[getProducts] public request, no token");
+  setTimeout(() => {
+    console.log("[getProducts] request started");
+    console.log("[getProducts] public request, no token");
+  }, 0);
   const params = new URLSearchParams();
   if (query.page) params.set("page", String(query.page));
   if (query.limit) params.set("limit", String(query.limit));
