@@ -416,18 +416,15 @@ export default function HomePage() {
 
     return products.filter((product) => {
       const productCategoryIds = [...(product.category || []), ...(product.categoryIds || [])].map(String);
-      return (
-        productCategoryIds.includes(String(selectedCategoryId)) ||
-        (selectedCategory && productCategoryIds.includes(String(selectedCategory.name)))
-      );
+      return productCategoryIds.includes(String(selectedCategoryId));
     });
-  }, [products, selectedCategoryId, selectedCategory, campaignProducts]);
+  }, [products, selectedCategoryId, campaignProducts]);
 
   const isCategoryScreen = activeScreen === "category";
 
-  // ✅ Arama yoksa: mevcut ekran mantığı (kampanya / kategori)
+  // ✅ Arama yoksa: mevcut ekran mantığı (home tüm ürünler / kategoriye göre filtre)
   // ✅ Arama varsa: TÜM ürünlerde arama
-  const displayProductsBase = isCategoryScreen ? selectedCategoryProducts : campaignProducts;
+  const displayProductsBase = isCategoryScreen ? selectedCategoryProducts : products;
 
   const displayProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -991,7 +988,7 @@ export default function HomePage() {
           numColumns={2}
           columnWrapperStyle={displayProducts.length > 1 ? styles.gridContainer : undefined}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => renderProductCard(item)}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
