@@ -28,7 +28,7 @@ export async function login(credentials: LoginRequest) {
   }
 
   await tokenStorage.setAccessToken(response.accessToken);
-  console.log("[Auth] token saved");
+  console.log("[AUTH] tokenSaved", { ok: true });
   return response;
 }
 

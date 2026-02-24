@@ -87,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await registerUser({ name, email, password });
       await tokenStorage.setAccessToken(response.accessToken);
+      console.log("[AUTH] tokenSaved", { ok: true });
       const me = await getCurrentUser(response.accessToken);
       setToken(response.accessToken);
       setUser(me);
