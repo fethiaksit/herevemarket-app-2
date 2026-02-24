@@ -9,6 +9,7 @@ export type CartItem = {
 };
 
 export function useCart() {
+  const CART_STORAGE_KEY = "herevemarket_cart";
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -17,7 +18,7 @@ export function useCart() {
 
     const loadCart = async () => {
       try {
-        const rawCart = await AsyncStorage.getItem("@hereve/cart");
+        const rawCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
         if (!mounted || !rawCart) return;
         const parsed = JSON.parse(rawCart);
         if (Array.isArray(parsed)) {
@@ -58,7 +59,7 @@ export function useCart() {
 
     const persistCart = async () => {
       try {
-        await AsyncStorage.setItem("@hereve/cart", JSON.stringify(cart));
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
       } catch (error) {
         console.warn("[Cart] failed to persist cart", error);
       }
@@ -67,7 +68,7 @@ export function useCart() {
     persistCart().catch((error) => {
       console.warn("[Cart] unhandled persist error", error);
     });
-  }, [cart, isHydrated]);
+  }, [CART_STORAGE_KEY, cart, isHydrated]);
 
   const increase = (item: { productId: string; title: string; unitPrice: number }) => {
     setCart((prev) => {

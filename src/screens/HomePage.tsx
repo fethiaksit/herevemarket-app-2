@@ -30,7 +30,7 @@ import { getProducts } from "../services/api/products";
 import { getCategories, CategoryDto } from "../services/api/categories";
 import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
 import { normalizeApiError } from "../services/api/client";
-import { submitGuestOrder, submitOrder } from "../services/api/orders";
+import { submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { ROUTES } from "../navigation/routes";
@@ -497,7 +497,7 @@ export default function HomePage() {
         const hasToken = !!accessToken;
 
         console.log("[CART][ADD] start", { hasToken });
-        console.log("[CART][ADD] tokenStatus", { hasToken });
+        console.log("[CART][ADD] tokenOptional", { hasToken });
 
         const product = products.find((item) => item.id === productId);
         if (!product) {
@@ -512,21 +512,14 @@ export default function HomePage() {
           return;
         }
 
-        // Login yokken sadece local state + AsyncStorage kullanılır (protected endpoint çağrısı yok).
-        if (!hasToken) {
-          increase({
-            productId: product.id,
-            title: product.name,
-            unitPrice: getEffectivePrice(product),
-          });
-          console.log("[CART][ADD] return", { reason: "no_token" });
-          return;
-        }
-
         increase({
           productId: product.id,
           title: product.name,
           unitPrice: getEffectivePrice(product),
+        });
+        console.log("[CART][ADD] added", {
+          productId: product.id,
+          qty: getQuantity(product.id) + 1,
         });
         console.log("[CART][ADD] return", { reason: "done" });
       } catch (error) {
@@ -537,7 +530,7 @@ export default function HomePage() {
         console.log("[CART][ADD] finally");
       }
     },
-    [increase, isAddingToCart, isOutOfStock, products, token]
+    [getQuantity, increase, isAddingToCart, isOutOfStock, products, token]
   );
 
   // Ürün Tıklama
@@ -744,12 +737,6 @@ export default function HomePage() {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
     if (isSubmittingOrder) return;
 
-    if (!isGuest && !token) {
-      Alert.alert("Oturum", "Devam etmek için tekrar giriş yapın.");
-      navigation.navigate(ROUTES.LOGIN);
-      return;
-    }
-
     if (!isGuest && !selectedAddressId) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
@@ -782,7 +769,9 @@ export default function HomePage() {
 
     try {
       setIsSubmittingOrder(true);
-      const response = isGuest ? await submitGuestOrder(payload as GuestOrderPayload) : await submitOrder(payload as AuthOrderPayload, token);
+      const hasToken = Boolean(token);
+      console.log("[ORDER] submit", { hasToken });
+      const response = await submitOrder(payload as GuestOrderPayload | AuthOrderPayload, token);
       setOrderId(response?.id ?? Math.floor(100000 + Math.random() * 900000).toString());
       clearCart();
       setActiveScreen("success");
