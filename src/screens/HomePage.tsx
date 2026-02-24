@@ -70,34 +70,53 @@ import BrandScroller from "./home/BrandScroller";
 import AuthGateSheet from "../components/AuthGateSheet";
 import BottomSheetModal from "../components/BottomSheetModal";
 
-const resolvePaymentMethod = (payment: PaymentMethod): "cash" | "card" => {
-  const normalized = String(payment.label || payment.id || "").toLowerCase();
-  return normalized.includes("nakit") || normalized.includes("cash") ? "cash" : "card";
-};
-
-const buildOrderPayload = (
+const buildGuestOrderPayload = (
   cartDetails: CartLineItem[],
   address: Address,
   payment: PaymentMethod,
   guestContact?: { fullName: string; phone: string; email?: string }
-): GuestOrderPayload | AuthOrderPayload => {
-  const items = cartDetails.map(({ product, quantity, unitPrice }) => ({
+): GuestOrderPayload => ({
+  items: cartDetails.map(({ product, quantity, unitPrice }) => ({
     productId: String(product.id),
     quantity,
-    price: unitPrice,
-  }));
+    price: Number(unitPrice),
+  })),
+  customer: {
+    fullName: (guestContact?.fullName || "Müşteri").trim(),
+    phone: (guestContact?.phone || "05550000000").trim(),
+    ...(guestContact?.email?.trim() ? { email: guestContact.email.trim() } : {}),
+  },
+  delivery: {
+    title: String(address.title || "").trim(),
+    detail: String(address.detail || "").trim(),
+    note: String(address.note || "").trim(),
+  },
+  paymentMethod: {
+    id: String(payment.id || "").trim(),
+    label: String(payment.label || "").trim(),
+  },
+});
 
-  return {
-    items,
-    customer: {
-      fullName: guestContact?.fullName || "Müşteri",
-      phone: guestContact?.phone || "05550000000",
-      email: guestContact?.email || "",
-    },
-    delivery: { title: address.title, detail: address.detail, note: address.note },
-    paymentMethod: resolvePaymentMethod(payment),
-  };
-};
+const buildAuthOrderPayload = (cartDetails: CartLineItem[], address: Address, payment: PaymentMethod): AuthOrderPayload => ({
+  items: cartDetails
+    .map(({ product, quantity, unitPrice }) => ({
+      productId: String(product.id || "").trim(),
+      name: String(product.name || "").trim(),
+      price: Number(unitPrice),
+      quantity: Number(quantity),
+    }))
+    .filter((item) => item.productId && item.name),
+  totalPrice: Number(cartDetails.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)),
+  customer: {
+    title: String(address.title || "").trim(),
+    detail: String(address.detail || "").trim(),
+    note: String(address.note || "").trim(),
+  },
+  paymentMethod: {
+    id: String(payment.id || "").trim(),
+    label: String(payment.label || "").trim(),
+  },
+});
 
 export default function HomePage() {
   const navigation = useNavigation<any>();
@@ -152,6 +171,32 @@ export default function HomePage() {
   const { width } = Dimensions.get("window");
   const slideWidth = width - 32;
 
+  const handleApiError = useCallback(
+    async (error: unknown, title: string) => {
+      const normalized = normalizeApiError(error);
+
+      if (normalized.status === 401) {
+        Alert.alert("Oturum", "Oturum süreniz doldu. Lütfen tekrar giriş yapın.");
+        await logout();
+        navigation.navigate(ROUTES.LOGIN);
+        return;
+      }
+
+      if (normalized.status === 400) {
+        Alert.alert(title, "İstek doğrulanamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin.");
+        return;
+      }
+
+      if (normalized.status === 0) {
+        Alert.alert(title, "İnternet bağlantınızı kontrol edip tekrar deneyin.");
+        return;
+      }
+
+      Alert.alert(title, normalized.message || "İşlem sırasında bir hata oluştu.");
+    },
+    [logout, navigation]
+  );
+
   const fetchPage = useCallback(
     async (nextPage: number) => {
       return getProducts({
@@ -184,8 +229,13 @@ export default function HomePage() {
   useEffect(() => {
     (async () => {
       setIsLoadingFirst(true);
-      await loadFirstPage();
-      setIsLoadingFirst(false);
+      try {
+        await loadFirstPage();
+      } catch (error) {
+        console.error("[Home] first page load failed", error);
+      } finally {
+        setIsLoadingFirst(false);
+      }
     })();
   }, [loadFirstPage]);
 
@@ -206,8 +256,13 @@ export default function HomePage() {
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || isLoadingFirst || isFetchingMore) return;
     setIsRefreshing(true);
-    await loadFirstPage();
-    setIsRefreshing(false);
+    try {
+      await loadFirstPage();
+    } catch (error) {
+      console.error("[Home] refresh failed", error);
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [isRefreshing, isLoadingFirst, isFetchingMore, loadFirstPage]);
 
   const fetchMore = useCallback(async () => {
@@ -261,13 +316,12 @@ export default function HomePage() {
       const defaultAddress = safeData.find((address) => address.isDefault) ?? safeData[0];
       setSelectedAddressId(defaultAddress?.id ?? "");
     } catch (error) {
-      const { message } = normalizeApiError(error);
-      Alert.alert("Adresler", message || "Adresler alınamadı.");
+      await handleApiError(error, "Adresler");
       console.error("[Home] load addresses failed", error);
     } finally {
       setAddressesLoading(false);
     }
-  }, [token]);
+  }, [handleApiError, token]);
 
   useEffect(() => {
     if (token && activeScreen === "address") loadAddresses();
@@ -428,7 +482,11 @@ export default function HomePage() {
   const handleIncrease = useCallback(
     (productId: string) => {
       const product = products.find((item) => item.id === productId);
-      if (product && isOutOfStock(product)) {
+      if (!product) {
+        Alert.alert("Ürün", "Ürün bilgisi alınamadı.");
+        return;
+      }
+      if (isOutOfStock(product)) {
         Alert.alert("Bu ürün stokta bulunmuyor");
         return;
       }
@@ -574,8 +632,7 @@ export default function HomePage() {
       Alert.alert("Başarılı", "Adres kaydedildi.");
       setActiveScreen("address");
     } catch (error) {
-      const { message } = normalizeApiError(error);
-      Alert.alert("Adres", message || "Adres kaydedilemedi.");
+      await handleApiError(error, "Adres");
       console.error("[Home] create address failed", error);
     } finally {
       setAddressSubmitLoading(false);
@@ -601,8 +658,7 @@ export default function HomePage() {
             await deleteAddress(token, id);
             setAddresses((prev) => prev.filter((address) => address.id !== id));
           } catch (error) {
-            const message = error instanceof Error ? error.message : "Adres silinemedi.";
-            Alert.alert("Adres", message);
+            await handleApiError(error, "Adres");
           }
         },
       },
@@ -639,14 +695,19 @@ export default function HomePage() {
       );
       setSelectedAddressId(updated.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Varsayılan adres ayarlanamadı.";
-      Alert.alert("Adres", message);
+      await handleApiError(error, "Adres");
     }
   };
 
   const handleSubmitOrder = async () => {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
     if (isSubmittingOrder) return;
+
+    if (!isGuest && !token) {
+      Alert.alert("Oturum", "Devam etmek için tekrar giriş yapın.");
+      navigation.navigate(ROUTES.LOGIN);
+      return;
+    }
 
     if (!isGuest && !selectedAddressId) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
@@ -674,7 +735,9 @@ export default function HomePage() {
       return;
     }
 
-    const payload = buildOrderPayload(cartDetails, selectedAddress, selectedPayment, guestInfo);
+    const payload = isGuest
+      ? buildGuestOrderPayload(cartDetails, selectedAddress, selectedPayment, guestInfo)
+      : buildAuthOrderPayload(cartDetails, selectedAddress, selectedPayment);
 
     try {
       setIsSubmittingOrder(true);
@@ -689,7 +752,7 @@ export default function HomePage() {
       } else if (normalized.status === 409) {
         Alert.alert("Stok", normalized.message || "Bazı ürünlerde stok yetersiz.");
       } else {
-        Alert.alert("Sipariş", normalized.message || "Sipariş gönderilemedi.");
+        await handleApiError(error, "Sipariş");
       }
     } finally {
       setIsSubmittingOrder(false);
