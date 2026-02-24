@@ -1,5 +1,4 @@
 import { apiFetch } from "./client";
-import { apiFetchAuthed } from "./authedClient";
 import { AuthOrderPayload, GuestOrderPayload } from "../../types";
 
 function removeUndefinedDeep<T>(value: T): T {
@@ -29,25 +28,35 @@ export async function submitGuestOrder(payload: GuestOrderPayload) {
   });
 }
 
-export async function submitOrder(payload: AuthOrderPayload, accessToken?: string | null) {
+export async function submitOrder(payload: AuthOrderPayload | GuestOrderPayload, accessToken?: string | null) {
   const cleanPayload = removeUndefinedDeep({
     ...payload,
     items: payload.items.map((item) => ({
       ...item,
       productId: String(item.productId ?? "").trim(),
     })),
-    paymentMethod: {
-      id: String(payload.paymentMethod?.id ?? "").trim(),
-      label: String(payload.paymentMethod?.label ?? "").trim(),
-    },
-    customer: {
-      title: String(payload.customer?.title ?? "").trim(),
-      detail: String(payload.customer?.detail ?? "").trim(),
-      note: String(payload.customer?.note ?? "").trim(),
-    },
+    paymentMethod:
+      typeof payload.paymentMethod === "string"
+        ? payload.paymentMethod
+        : {
+          id: String(payload.paymentMethod?.id ?? "").trim(),
+          label: String(payload.paymentMethod?.label ?? "").trim(),
+        },
+    customer:
+      "fullName" in payload.customer
+        ? {
+          fullName: String(payload.customer.fullName ?? "").trim(),
+          phone: String(payload.customer.phone ?? "").trim(),
+          email: String(payload.customer.email ?? "").trim() || undefined,
+        }
+        : {
+          title: String(payload.customer?.title ?? "").trim(),
+          detail: String(payload.customer?.detail ?? "").trim(),
+          note: String(payload.customer?.note ?? "").trim(),
+        },
   });
 
-  return apiFetchAuthed<{ id: string; summary: { total: number; subtotal: number; itemCount: number } }>("/orders", {
+  return apiFetch<{ id: string; summary: { total: number; subtotal: number; itemCount: number } }>("/orders", {
     method: "POST",
     accessToken,
     headers: { "Content-Type": "application/json" },
