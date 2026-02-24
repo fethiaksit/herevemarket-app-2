@@ -165,6 +165,7 @@ export default function HomePage() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showCartSheet, setShowCartSheet] = useState(false);
+  const [checkoutAccessToken, setCheckoutAccessToken] = useState<string | null>(null);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
@@ -306,15 +307,15 @@ export default function HomePage() {
     fetchPage,
   ]);
 
-  const loadAddresses = useCallback(async () => {
-    if (!token) {
+  const loadAddresses = useCallback(async (accessToken: string | null) => {
+    if (!accessToken) {
       setAddresses([]);
       setSelectedAddressId("");
       return;
     }
     setAddressesLoading(true);
     try {
-      const data = await getAddresses(token);
+      const data = await getAddresses(accessToken);
       const safeData = Array.isArray(data) ? data : [];
       setAddresses(safeData);
       const defaultAddress = safeData.find((address) => address.isDefault) ?? safeData[0];
@@ -325,18 +326,20 @@ export default function HomePage() {
     } finally {
       setAddressesLoading(false);
     }
-  }, [handleApiError, token]);
+  }, [handleApiError]);
 
   useEffect(() => {
-    if (token && activeScreen === "address") loadAddresses();
-  }, [activeScreen, loadAddresses, token]);
+    if (activeScreen === "address" && checkoutAccessToken) {
+      loadAddresses(checkoutAccessToken);
+    }
+  }, [activeScreen, checkoutAccessToken, loadAddresses]);
 
   useEffect(() => {
-    if (isGuest) {
+    if (!checkoutAccessToken) {
       setAddresses([]);
       setSelectedAddressId("");
     }
-  }, [isGuest]);
+  }, [checkoutAccessToken]);
 
   // Categories
   useEffect(() => {
@@ -646,12 +649,17 @@ export default function HomePage() {
   };
 
   // Navigasyonlar
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
-    if (!user) {
-      setShowAuthGate(true);
-      return;
+
+    const accessToken = await tokenStorage.getAccessToken();
+    const isAuthed = !!accessToken;
+    setCheckoutAccessToken(accessToken ?? null);
+
+    if (isAuthed) {
+      await loadAddresses(accessToken);
     }
+
     setActiveScreen("address");
   };
 
@@ -662,7 +670,7 @@ export default function HomePage() {
       const created = await createAddress(token, { ...data, isDefault: addresses.length === 0 });
       setAddresses((prev) => [...prev, created]);
       setSelectedAddressId(created.id || created._id || "");
-      await loadAddresses();
+      await loadAddresses(token);
       Alert.alert("Başarılı", "Adres kaydedildi.");
       setActiveScreen("address");
     } catch (error) {
@@ -737,18 +745,23 @@ export default function HomePage() {
     if (!cartDetails.length) return Alert.alert("Sepet Boş");
     if (isSubmittingOrder) return;
 
-    if (!isGuest && !selectedAddressId) {
+    const accessToken = await tokenStorage.getAccessToken();
+    const isAuthed = !!accessToken;
+
+    console.log("[CHECKOUT] start", { isAuthed, itemsCount: cartDetails.length });
+
+    if (isAuthed && !selectedAddressId) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
     }
 
-    const selectedAddress = isGuest ? ({ id: "guest", ...guestAddress } as any) : addresses.find((a) => a.id === selectedAddressId);
+    const selectedAddress = isAuthed ? addresses.find((a) => a.id === selectedAddressId) : ({ id: "guest", ...guestAddress } as any);
     if (!selectedAddress) {
       Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
       return;
     }
 
-    if (isGuest) {
+    if (!isAuthed) {
       const nextErrors: { detail?: string } = {};
       if (!guestAddress.title.trim()) {
         Alert.alert("Adres", "Adres başlığı zorunludur (ör. Ev, İş).");
@@ -765,7 +778,7 @@ export default function HomePage() {
       return;
     }
 
-    const payload = isGuest
+    const payload = !isAuthed
       ? buildGuestOrderPayload(cartDetails, selectedAddress, selectedPayment)
       : buildAuthOrderPayload(cartDetails, selectedAddress, selectedPayment);
 
@@ -782,29 +795,19 @@ export default function HomePage() {
 
     setIsSubmittingOrder(true);
     try {
-      const accessToken = await tokenStorage.getAccessToken();
-      const hasToken = Boolean(accessToken);
-      console.log("LOG [CHECKOUT] submitStart", {
-        itemsCount: payload.items.length,
-        hasToken,
-        hasCustomer,
-        paymentMethod: payload.paymentMethod,
-      });
+      console.log("[CHECKOUT] calling /orders");
 
       const response = await submitOrder(payload as GuestOrderPayload | AuthOrderPayload, accessToken ?? null);
       const nextOrderId = response?.id ?? Math.floor(100000 + Math.random() * 900000).toString();
-
-      console.log("LOG [CHECKOUT] submitSuccess", { orderId: nextOrderId });
 
       setOrderId(nextOrderId);
       clearCart();
       setActiveScreen("success");
     } catch (error) {
       const normalized = normalizeApiError(error);
-      console.log("LOG [CHECKOUT] submitError", {
+      console.log("[CHECKOUT] error", {
         status: normalized.status,
         message: normalized.message,
-        data: normalized.data,
       });
 
       if (normalized.status === 429) {
@@ -890,7 +893,7 @@ export default function HomePage() {
   }
 
   if (activeScreen === "address") {
-    if (isGuest) {
+    if (!checkoutAccessToken) {
       return (
         <GuestAddressScreen
           address={guestAddress}
@@ -943,7 +946,7 @@ export default function HomePage() {
   if (activeScreen === "addCard") return <AddCardScreen onSave={handleSaveCard} onCancel={() => setActiveScreen("payment")} />;
 
   if (activeScreen === "summary") {
-    const summaryAddress = isGuest ? ({ id: "guest", ...guestAddress } as any) : addresses.find((a) => a.id === selectedAddressId);
+    const summaryAddress = checkoutAccessToken ? addresses.find((a) => a.id === selectedAddressId) : ({ id: "guest", ...guestAddress } as any);
     return (
       <SummaryScreen
         cartDetails={cartDetails}
