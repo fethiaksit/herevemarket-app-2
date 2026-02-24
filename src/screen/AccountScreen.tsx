@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../navigation/routes";
 import { MainStackParamList } from "../navigation/types";
@@ -135,7 +136,7 @@ export default function AccountScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={sharedStyles.container}>
+      <SafeAreaView style={sharedStyles.container} edges={["bottom"]}>
         <AppHeader title="Profil / Hesabım" />
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="small" color={THEME.primary} />
@@ -145,7 +146,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <SafeAreaView style={sharedStyles.container}>
+    <SafeAreaView style={sharedStyles.container} edges={["bottom"]}>
       <AppHeader title="Profil / Hesabım" />
 
       <ScrollView contentContainerStyle={sharedStyles.scrollContent}>

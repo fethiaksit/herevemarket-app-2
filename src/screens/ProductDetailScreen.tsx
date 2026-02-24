@@ -5,9 +5,9 @@ import {
   StyleSheet, 
   Text, 
   TouchableOpacity, 
-  View, 
-  SafeAreaView 
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { buildImageUrl } from "../utils/buildImageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import AppHeader from "../components/AppHeader";
@@ -72,7 +72,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
   const isOnSale = activePrice < Number(product.price);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <AppHeader title="Ürün Detayı" onBack={onBack} />
       <View style={styles.headerActions}>
         <TouchableOpacity style={styles.favoriteHeaderBtn} onPress={onToggleFavorite}>

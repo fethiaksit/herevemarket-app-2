@@ -1,8 +1,9 @@
 import React, { useCallback } from "react";
-import { ActivityIndicator, Alert, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../hooks/useCart";
 import { useFavorites } from "../context/FavoritesContext";
 import { styles } from "../screens/styles";
@@ -30,7 +31,7 @@ export default function FavoritesScreen() {
   }, [toggleFavorite]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <AppHeader title="Favoriler" />
 
       {loading ? <ActivityIndicator size="small" color={THEME.primary} style={{ marginTop: 20 }} /> : null}
