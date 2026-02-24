@@ -41,16 +41,40 @@ export type Address = {
 
 export type OrderItemPayload = {
   productId: string;
+  name?: string;
   quantity: number;
   price: number;
+};
+
+export type PaymentMethodPayload = {
+  id: string;
+  label: string;
+};
+
+export type OrderCustomerPayload = {
+  title: string;
+  detail: string;
+  note: string;
+};
+
+export type OrderPayload = {
+  items: Array<{
+    productId: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  totalPrice: number;
+  customer: OrderCustomerPayload;
+  paymentMethod: PaymentMethodPayload;
 };
 
 export type GuestOrderPayload = {
   items: OrderItemPayload[];
   customer: { fullName: string; phone: string; email?: string };
   delivery: { title?: string; detail: string; note?: string };
-  paymentMethod: "cash" | "card";
+  paymentMethod: PaymentMethodPayload | "cash" | "card";
   couponCode?: string;
 };
 
-export type AuthOrderPayload = GuestOrderPayload;
+export type AuthOrderPayload = OrderPayload;
