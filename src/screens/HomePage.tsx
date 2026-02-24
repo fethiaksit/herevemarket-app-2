@@ -406,7 +406,7 @@ export default function HomePage() {
   );
 
   const campaignProducts = useMemo(
-    () => products.filter((product) => product.isCampaign && product.inStock && product.stock > 0),
+    () => products.filter((product) => !!product.isCampaign),
     [products]
   );
 
@@ -414,17 +414,19 @@ export default function HomePage() {
     if (!selectedCategoryId) return [];
     if (selectedCategoryId === CAMPAIGN_CATEGORY_ID) return campaignProducts;
 
+    const targetId = String(selectedCategoryId);
+
     return products.filter((product) => {
-      const productCategoryIds = [...(product.category || []), ...(product.categoryIds || [])].map(String);
-      return productCategoryIds.includes(String(selectedCategoryId));
+      const ids = [...(product.categoryIds || []), ...(product.category || [])].map(String);
+      return ids.includes(targetId);
     });
   }, [products, selectedCategoryId, campaignProducts]);
 
   const isCategoryScreen = activeScreen === "category";
 
-  // ✅ Arama yoksa: mevcut ekran mantığı (home tüm ürünler / kategoriye göre filtre)
+  // ✅ Arama yoksa: home'da kampanyalılar, kategori ekranında seçili kategori
   // ✅ Arama varsa: TÜM ürünlerde arama
-  const displayProductsBase = isCategoryScreen ? selectedCategoryProducts : products;
+  const displayProductsBase = isCategoryScreen ? selectedCategoryProducts : campaignProducts;
 
   const displayProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
