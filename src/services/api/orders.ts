@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { apiFetchAuthed } from "./authedClient";
 import { AuthOrderPayload, GuestOrderPayload } from "../../types";
 
 function removeUndefinedDeep<T>(value: T): T {
@@ -46,7 +47,7 @@ export async function submitOrder(payload: AuthOrderPayload, accessToken?: strin
     },
   });
 
-  return apiFetch<{ id: string; summary: { total: number; subtotal: number; itemCount: number } }>("/orders", {
+  return apiFetchAuthed<{ id: string; summary: { total: number; subtotal: number; itemCount: number } }>("/orders", {
     method: "POST",
     accessToken,
     headers: { "Content-Type": "application/json" },
