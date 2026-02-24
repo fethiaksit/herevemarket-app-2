@@ -34,6 +34,7 @@ import { submitGuestOrder, submitOrder } from "../services/api/orders";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { ROUTES } from "../navigation/routes";
+import { tokenStorage } from "../services/auth/tokenStorage";
 
 // --- TYPES / STYLES / CONSTANTS ---
 import { Address, AuthOrderPayload, GuestOrderPayload } from "../types";
@@ -484,7 +485,6 @@ export default function HomePage() {
 
   const handleIncrease = useCallback(
     async (productId: string) => {
-      console.log("[CART][ADD] start", { hasToken: !!token });
       if (isAddingToCart) {
         console.log("[CART][ADD] return", { reason: "done" });
         return;
@@ -492,6 +492,13 @@ export default function HomePage() {
 
       setIsAddingToCart(true);
       try {
+        const storedToken = await tokenStorage.getAccessToken();
+        const accessToken = token || storedToken;
+        const hasToken = !!accessToken;
+
+        console.log("[CART][ADD] start", { hasToken });
+        console.log("[CART][ADD] tokenStatus", { hasToken });
+
         const product = products.find((item) => item.id === productId);
         if (!product) {
           Alert.alert("Ürün", "Ürün bilgisi alınamadı.");
@@ -506,7 +513,7 @@ export default function HomePage() {
         }
 
         // Login yokken sadece local state + AsyncStorage kullanılır (protected endpoint çağrısı yok).
-        if (!token) {
+        if (!hasToken) {
           increase({
             productId: product.id,
             title: product.name,
