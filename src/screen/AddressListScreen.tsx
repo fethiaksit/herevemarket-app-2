@@ -4,7 +4,6 @@ import {
   Alert,
   FlatList,
   ListRenderItem,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { MainStackParamList } from "../navigation/types";
 import { Address } from "../types";
@@ -194,7 +194,7 @@ export default function AddressListScreen({ navigation }: AddressListProps) {
   const submitLabel = useMemo(() => (editing ? "Güncelle" : "Kaydet"), [editing]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <AppHeader title="Kayıtlı Adres / Adres" />
 
       <View style={styles.headerActions}>

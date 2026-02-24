@@ -1,6 +1,7 @@
 import React from "react";
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
@@ -16,7 +17,7 @@ export default function AuthLandingScreen({ navigation }: AuthLandingProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <AppHeader title="Hereve Market" showBack={false} />
       <View style={styles.content}>
         <Text style={styles.title}>Hereve Market</Text>

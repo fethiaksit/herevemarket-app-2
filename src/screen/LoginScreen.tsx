@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { ROUTES } from "../navigation/routes";
@@ -71,7 +72,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   }, [authChecked, navigation, token]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <AppHeader title="Giriş Yap" />
       <View style={styles.content}>
         <View style={styles.card}>
