@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../navigation/routes";
 import { MainStackParamList } from "../navigation/types";
@@ -10,6 +11,7 @@ import { styles as sharedStyles } from "../screens/styles";
 import { THEME } from "../constants/theme";
 import AuthGateSheet from "../components/AuthGateSheet";
 import AppHeader from "../components/AppHeader";
+import AccountMenuItem from "../components/AccountMenuItem";
 import { User } from "../types";
 import { normalizeApiError } from "../services/api/client";
 
@@ -101,6 +103,15 @@ export default function AccountScreen() {
     navigation.navigate(ROUTES.LOGIN);
   }, [navigation]);
 
+  const handleEditProfilePress = useCallback(() => {
+    if (!token) {
+      setShowAuthGate(true);
+      return;
+    }
+
+    navigation.navigate(ROUTES.EDIT_PROFILE);
+  }, [navigation, token]);
+
   const handleAddressesPress = useCallback(() => {
     if (!token) {
       setShowAuthGate(true);
@@ -117,6 +128,15 @@ export default function AccountScreen() {
     }
 
     navigation.navigate(ROUTES.FAVORITES);
+  }, [navigation, token]);
+
+  const handlePaymentMethodsPress = useCallback(() => {
+    if (!token) {
+      setShowAuthGate(true);
+      return;
+    }
+
+    navigation.navigate(ROUTES.PAYMENT_METHODS);
   }, [navigation, token]);
 
   const handleLogout = useCallback(() => {
@@ -153,7 +173,17 @@ export default function AccountScreen() {
         {refreshing ? <ActivityIndicator size="small" color={THEME.primary} style={{ marginBottom: 12 }} /> : null}
 
         <View style={sharedStyles.summaryCard}>
-          <Text style={sharedStyles.summarySectionTitle}>Hesap Bilgileri</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={sharedStyles.summarySectionTitle}>Hesap Bilgileri</Text>
+            <TouchableOpacity
+              onPress={handleEditProfilePress}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              style={{ padding: 4, marginTop: -8 }}
+            >
+              <Ionicons name="create-outline" size={18} color={THEME.primary} />
+            </TouchableOpacity>
+          </View>
+
           {profile ? (
             <>
               <InfoRow label="Ad Soyad" value={fullName} />
@@ -178,12 +208,9 @@ export default function AccountScreen() {
 
         <View style={sharedStyles.summaryCard}>
           <Text style={sharedStyles.summarySectionTitle}>Hesap İşlemleri</Text>
-          <TouchableOpacity style={{ paddingVertical: 10 }} onPress={handleAddressesPress}>
-            <Text style={{ fontSize: 15, color: THEME.textDark, fontWeight: "600" }}>Adresler</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ paddingVertical: 10 }} onPress={handleFavoritesPress}>
-            <Text style={{ fontSize: 15, color: THEME.textDark, fontWeight: "600" }}>Favoriler</Text>
-          </TouchableOpacity>
+          <AccountMenuItem iconName="location-outline" label="Adresler" onPress={handleAddressesPress} />
+          <AccountMenuItem iconName="heart-outline" label="Favoriler" onPress={handleFavoritesPress} />
+          <AccountMenuItem iconName="card-outline" label="Kayıtlı Kartlar" onPress={handlePaymentMethodsPress} />
         </View>
 
         <TouchableOpacity style={[sharedStyles.secondaryButton, { marginTop: 8, alignItems: "center" }]} onPress={handleLogout}>
