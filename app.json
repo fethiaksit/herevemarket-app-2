@@ -2,19 +2,19 @@
   "expo": {
     "name": "herevemarket",
     "slug": "herevemarket",
-    "version": "1.0.0",
-    "sdkVersion": "54.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/market-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "jsEngine": "hermes",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/market-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.fethiaksit.herevemarket",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
@@ -23,21 +23,28 @@
               "NSTemporaryExceptionAllowsInsecureHTTPLoads": true
             }
           }
-        }
-      },
-      "bundleIdentifier": "com.fethiaksit.herevemarket"
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.fethiaksit.herevemarket",
+      "versionCode": 2,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/market-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.fethiaksit.herevemarket"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/market-icon.png"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/de5c078a-cf0e-44a8-b23b-de8694f36295"
     },
     "extra": {
       "stage": "development",
@@ -51,12 +58,6 @@
       }
     },
     "owner": "fethiaksit",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/de5c078a-cf0e-44a8-b23b-de8694f36295"
-    },
     "plugins": [
       "expo-secure-store"
     ]
