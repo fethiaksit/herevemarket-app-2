@@ -9,10 +9,11 @@ import AppHeader from "../components/AppHeader";
 
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, "Login">;
 
-export default function LoginScreen({ navigation }: LoginScreenProps) {
+export default function LoginScreen({ navigation, route }: LoginScreenProps) {
   const { login, loading, token, authChecked } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [prefillNotice, setPrefillNotice] = useState("");
   const handledInitialAuthRedirect = useRef(false);
 
   const isSubmitDisabled = useMemo(() => loading, [loading]);
@@ -71,38 +72,51 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   }, [authChecked, navigation, token]);
 
+  useEffect(() => {
+    const prefillEmail = route.params?.prefillEmail?.trim();
+
+    if (!prefillEmail) {
+      setPrefillNotice("");
+      return;
+    }
+
+    setEmail(prefillEmail);
+    setPrefillNotice("Şimdi giriş yap");
+  }, [route.params?.prefillEmail]);
+
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <AppHeader title="Giriş Yap" />
       <View style={styles.content}>
         <View style={styles.card}>
-        <Text style={styles.title}>Giriş Yap</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          editable={!loading}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Şifre"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          editable={!loading}
-        />
-        <TouchableOpacity style={[styles.primaryButton, isSubmitDisabled && styles.primaryButtonDisabled]} onPress={handleSubmit} disabled={isSubmitDisabled}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Giriş Yap</Text>}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackHome}>
-          <Text style={styles.backButtonText}>Ana Sayfaya Dön</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-          <Text style={styles.footerText}>Hesabın yok mu? Üye ol</Text>
-        </TouchableOpacity>
+          <Text style={styles.title}>Giriş Yap</Text>
+          {prefillNotice ? <Text style={styles.prefillNotice}>{prefillNotice}</Text> : null}
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Şifre"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            editable={!loading}
+          />
+          <TouchableOpacity style={[styles.primaryButton, isSubmitDisabled && styles.primaryButtonDisabled]} onPress={handleSubmit} disabled={isSubmitDisabled}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Giriş Yap</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackHome}>
+            <Text style={styles.backButtonText}>Ana Sayfaya Dön</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+            <Text style={styles.footerText}>Hesabın yok mu? Üye ol</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -133,6 +147,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 16,
     color: "#1F2937",
+  },
+  prefillNotice: {
+    color: "#004AAD",
+    marginBottom: 12,
+    fontWeight: "600",
   },
   input: {
     borderWidth: 1,
