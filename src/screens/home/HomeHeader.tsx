@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { THEME } from "../../constants/theme";
 import { styles } from "../styles";
 import { CategoryDto } from "../../services/api/categories";
@@ -61,11 +62,15 @@ export default function HomeHeader({
           <Image source={require("../../../assets/newlogo1.png")} style={styles.headerLogo} resizeMode="contain" />
         </View>
 
-        {/* Test notu: iOS/Android'de logo + Hesabım aynı yatay çizgide, header yüksekliği sabit kaldı. */}
+        {/* Test notu: iOS/Android'de logo + hesap ikonu aynı yatay çizgide, header yüksekliği sabit kaldı. */}
         <View style={styles.accountRow}>
-        <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.accountButtonText}>Hesabım</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.accountButton}
+            onPress={handleAccountPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="person-outline" size={18} color={THEME.white} />
+          </TouchableOpacity>
         </View>
       </View>
 
