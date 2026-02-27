@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import { styles as sharedStyles } from "../screens/styles";
 import { THEME } from "../constants/theme";
 import { updateCurrentUserProfile } from "../services/api/auth";
-import { normalizeApiError } from "../services/api/client";
 import { useNavigation } from "@react-navigation/native";
 
 type FormErrors = {
@@ -75,10 +74,6 @@ export default function EditProfileScreen() {
       Alert.alert("Başarılı", "Profil güncellendi");
       navigation.goBack();
     } catch (error) {
-      if (__DEV__) {
-        const normalized = normalizeApiError(error);
-        console.log("[EditProfile] update failed", normalized.status, normalized.message);
-      }
       Alert.alert("Hata", "Güncelleme başarısız. Lütfen tekrar deneyin.");
     } finally {
       setSaving(false);
@@ -132,9 +127,9 @@ export default function EditProfileScreen() {
         </View>
 
         <TouchableOpacity
-          style={[sharedStyles.primaryButton, saving ? sharedStyles.disabledButton : null]}
+          style={[sharedStyles.primaryButton, (saving || shouldBlock) ? sharedStyles.disabledButton : null]}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || shouldBlock}
         >
           <Text style={sharedStyles.primaryButtonText}>{saving ? "Kaydediliyor..." : "Kaydet"}</Text>
         </TouchableOpacity>
