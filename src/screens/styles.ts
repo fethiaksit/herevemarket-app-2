@@ -1,6 +1,14 @@
 import { StyleSheet, Dimensions } from "react-native";
 import { THEME } from "../constants/theme";
 
+const { width: screenWidth } = Dimensions.get("window");
+const LOGO_ASPECT_RATIO = 180 / 42;
+const LOGO_TARGET_WIDTH = 180 * 3;
+const LOGO_MAX_WIDTH = screenWidth * 0.6;
+const logoWidth = Math.min(LOGO_TARGET_WIDTH, LOGO_MAX_WIDTH);
+const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
+const headerVerticalPadding = 10;
+
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: THEME.background },
   scrollContent: { padding: 16, paddingBottom: 100 },
@@ -9,7 +17,8 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 60,
+    minHeight: logoHeight + headerVerticalPadding * 2,
+    paddingVertical: headerVerticalPadding,
     paddingHorizontal: 16,
     position: "relative",
   },
@@ -17,12 +26,13 @@ headerLogoContainer: {
   flex: 1,
   alignItems: "flex-start",
   justifyContent: "center",
+  maxWidth: "60%",
   paddingTop: 0,
 },
-  headerLogo: { width: 180, height: 42 },
-  accountRow: { flexDirection: "row", justifyContent: "flex-end" },
-  accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 12 },
+  headerLogo: { width: "100%", maxWidth: logoWidth, height: logoHeight, maxHeight: 126 },
+  accountRow: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
+  accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 14 },
   headerBar: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: THEME.white, borderBottomWidth: 1, borderColor: THEME.borderColor },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark },
   headerCenterAbsolute: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
