@@ -16,6 +16,7 @@ export type AuthContextValue = {
   continueAsGuest: () => Promise<void>;
   loadFromStorage: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
+  setAuthenticatedSession: (accessToken: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -86,6 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const response = await registerUser({ name, email, password });
+      if (!response.accessToken) {
+        throw new Error("Kayıt başarılı ancak oturum anahtarı alınamadı.");
+      }
       await tokenStorage.setAccessToken(response.accessToken);
       console.log("[AUTH] tokenSaved", { ok: true });
       const me = await getCurrentUser(response.accessToken);
@@ -126,6 +130,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return me;
   }, [token]);
 
+  const setAuthenticatedSession = useCallback(async (accessToken: string) => {
+    await tokenStorage.setAccessToken(accessToken);
+    const me = await getCurrentUser(accessToken);
+    setToken(accessToken);
+    setUser(me);
+    setIsGuest(false);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -139,8 +151,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       continueAsGuest,
       loadFromStorage,
       refreshUser,
+      setAuthenticatedSession,
     }),
-    [user, token, loading, authChecked, isGuest, login, register, logout, continueAsGuest, loadFromStorage, refreshUser]
+    [
+      user,
+      token,
+      loading,
+      authChecked,
+      isGuest,
+      login,
+      register,
+      logout,
+      continueAsGuest,
+      loadFromStorage,
+      refreshUser,
+      setAuthenticatedSession,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
