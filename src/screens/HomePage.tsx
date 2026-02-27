@@ -171,13 +171,17 @@ export default function HomePage() {
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const [isInteractingWithBrands, setIsInteractingWithBrands] = useState(false);
   const sliderRef = useRef<ScrollView | null>(null);
+  const sliderAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const categoryListRef = useRef<ScrollView | null>(null);
   const productListRef = useRef<FlatList<Product> | null>(null);
   const productListOffset = useRef(0);
 
   const { width } = Dimensions.get("window");
   const insets = useSafeAreaInsets();
-  const slideWidth = width - 68;
+  const sliderItemWidth = width * 0.86;
+  const sliderGap = 12;
+  const sliderSidePeek = (width - sliderItemWidth) / 2;
+  const sliderSnapInterval = sliderItemWidth + sliderGap;
 
   const handleApiError = useCallback(
     async (error: unknown, title: string) => {
@@ -364,17 +368,42 @@ export default function HomePage() {
     if (!selectedCategoryId && categories.length) setSelectedCategoryId(CAMPAIGN_CATEGORY_ID);
   }, [categories, selectedCategoryId]);
 
-  // Slider auto-advance
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const clearSliderAutoplay = useCallback(() => {
+    if (sliderAutoplayRef.current) {
+      clearInterval(sliderAutoplayRef.current);
+      sliderAutoplayRef.current = null;
+    }
+  }, []);
+
+  const startSliderAutoplay = useCallback(() => {
+    clearSliderAutoplay();
+
+    if (dailyDeals.length <= 1) return;
+
+    sliderAutoplayRef.current = setInterval(() => {
       setActiveDealIndex((prev) => {
-        const next = (prev + 1) % dailyDeals.length;
-        sliderRef.current?.scrollTo({ x: next * slideWidth, animated: true });
-        return next;
+        const isLastSlide = prev >= dailyDeals.length - 1;
+        const nextIndex = isLastSlide ? 0 : prev + 1;
+
+        sliderRef.current?.scrollTo({ x: nextIndex * sliderSnapInterval, animated: !isLastSlide });
+
+        if (isLastSlide) {
+          sliderRef.current?.scrollTo({ x: 0, animated: false });
+        }
+
+        return nextIndex;
       });
     }, 4000);
-    return () => clearInterval(interval);
-  }, [slideWidth]);
+  }, [clearSliderAutoplay, sliderSnapInterval]);
+
+  useEffect(() => {
+    startSliderAutoplay();
+    return clearSliderAutoplay;
+  }, [startSliderAutoplay, clearSliderAutoplay]);
+
+  const resetSliderAutoplay = useCallback(() => {
+    startSliderAutoplay();
+  }, [startSliderAutoplay]);
 
   // Filtreleme
   const selectedCategory = useMemo(
@@ -883,9 +912,13 @@ export default function HomePage() {
             <HomeSlider
               dailyDeals={dailyDeals}
               sliderRef={sliderRef}
-              slideWidth={slideWidth}
+              itemWidth={sliderItemWidth}
+              sidePeek={sliderSidePeek}
+              gap={sliderGap}
+              snapInterval={sliderSnapInterval}
               activeDealIndex={activeDealIndex}
               setActiveDealIndex={setActiveDealIndex}
+              onUserInteraction={resetSliderAutoplay}
             />
             {/* Test notu: Marka listesini kaydırırken kategori state'i değişmiyor (gesture çakışması yok). */}
             <BrandScroller
@@ -903,7 +936,7 @@ export default function HomePage() {
         </View>
       </>
     ),
-    [showTopSlider, slideWidth, activeDealIndex, pageTitle, isLoadingFirst, error]
+    [showTopSlider, sliderItemWidth, sliderSidePeek, sliderGap, sliderSnapInterval, activeDealIndex, pageTitle, isLoadingFirst, error, resetSliderAutoplay]
   );
 
   if (!authChecked) {

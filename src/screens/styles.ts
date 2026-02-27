@@ -47,9 +47,8 @@ headerLogoContainer: {
   categoryPillText: { color: THEME.white, fontWeight: '600' },
   categoryPillTextActive: { color: THEME.textDark, fontWeight: 'bold' },
   sliderSection: { paddingTop: 20 },
-  sliderContainer: { height: 180, marginHorizontal: 16, borderRadius: 16, overflow: 'visible' },
-  sliderTrack: { paddingHorizontal: 6 },
-  slideGap: { marginHorizontal: 5 },
+  sliderContainer: { height: 180, marginHorizontal: -16, borderRadius: 16, overflow: 'visible' },
+  sliderTrack: {},
   slideCard: {
     flex: 1,
     borderRadius: 16,
