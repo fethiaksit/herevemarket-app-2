@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import { User } from "../../types";
 import { login as loginWithStorage } from "../auth/auth";
 import { apiFetchAuthed } from "./authedClient";
+import { API_BASE_URL } from "../../config/env";
 
 export type LoginRequest = {
   email: string;
@@ -15,7 +16,17 @@ export type RegisterRequest = {
 };
 
 export type AuthResponse = {
-  accessToken: string;
+  accessToken?: string;
+  message?: string;
+  success?: boolean;
+  error?: string;
+  details?: string;
+};
+
+export type RegisterResult = {
+  ok: boolean;
+  status: number;
+  data: AuthResponse;
 };
 
 export async function loginUser(payload: LoginRequest) {
@@ -27,6 +38,24 @@ export async function registerUser(payload: RegisterRequest) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function registerUserRaw(payload: RegisterRequest): Promise<RegisterResult> {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: (data ?? {}) as AuthResponse,
+  };
 }
 
 export async function getCurrentUser(accessToken?: string | null) {

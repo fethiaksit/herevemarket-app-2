@@ -12,7 +12,9 @@ export type RootStackParamList = {
 
 export type AuthStackParamList = {
   AuthLanding: undefined;
-  Login: undefined;
+  Login: {
+    prefillEmail?: string;
+  } | undefined;
   Register: undefined;
 };
 
