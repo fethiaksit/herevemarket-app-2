@@ -9,7 +9,6 @@ export default function HomeSlider({
   sidePeek,
   gap,
   snapInterval,
-  activeDealIndex,
   setActiveDealIndex,
   onUserInteraction,
 }: {
@@ -19,7 +18,6 @@ export default function HomeSlider({
   sidePeek: number;
   gap: number;
   snapInterval: number;
-  activeDealIndex: number;
   setActiveDealIndex: (value: number) => void;
   onUserInteraction: () => void;
 }) {
@@ -48,7 +46,6 @@ export default function HomeSlider({
           </View>
         ))}
       </ScrollView>
-      <View style={styles.dotsContainer}>{dailyDeals.map((_, i) => <View key={i} style={[styles.dot, i === activeDealIndex && styles.dotActive]} />)}</View>
     </View>
   );
 }

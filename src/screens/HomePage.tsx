@@ -168,7 +168,7 @@ export default function HomePage() {
   const [showCartSheet, setShowCartSheet] = useState(false);
   const [checkoutAccessToken, setCheckoutAccessToken] = useState<string | null>(null);
 
-  const [activeDealIndex, setActiveDealIndex] = useState(0);
+  const [, setActiveDealIndex] = useState(0);
   const [isInteractingWithBrands, setIsInteractingWithBrands] = useState(false);
   const sliderRef = useRef<ScrollView | null>(null);
   const sliderAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -916,7 +916,6 @@ export default function HomePage() {
               sidePeek={sliderSidePeek}
               gap={sliderGap}
               snapInterval={sliderSnapInterval}
-              activeDealIndex={activeDealIndex}
               setActiveDealIndex={setActiveDealIndex}
               onUserInteraction={resetSliderAutoplay}
             />
@@ -936,7 +935,7 @@ export default function HomePage() {
         </View>
       </>
     ),
-    [showTopSlider, sliderItemWidth, sliderSidePeek, sliderGap, sliderSnapInterval, activeDealIndex, pageTitle, isLoadingFirst, error, resetSliderAutoplay]
+    [showTopSlider, sliderItemWidth, sliderSidePeek, sliderGap, sliderSnapInterval, pageTitle, isLoadingFirst, error, resetSliderAutoplay]
   );
 
   if (!authChecked) {
