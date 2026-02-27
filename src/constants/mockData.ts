@@ -21,9 +21,14 @@ export const markalar: Brand[] = [
 
 export const placeholderImage = require("../../assets/logo.png");
 export const dailyDeals = [
-  require("../../assets/banner1.png"),
-  require("../../assets/banner2.png"),
-  require("../../assets/banner3.png"),
+  require("../../assets/slider9.png"),
+  require("../../assets/slider7.png"),
+  require("../../assets/slider4.png"),
+  require("../../assets/slider5.png"),
+  require("../../assets/slider6.png"),
+  require("../../assets/slider8.png"),
+
+
 ];
 
 export const fallbackProducts: Product[] = [
