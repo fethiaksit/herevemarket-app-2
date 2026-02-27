@@ -31,7 +31,7 @@ export default function HomeHeader({
   selectedCategoryId: string | null;
   setSelectedCategoryId: React.Dispatch<React.SetStateAction<string | null>>;
   handleAccountPress: () => void;
-  categoryListRef: React.RefObject<ScrollView>;
+  categoryListRef: React.RefObject<ScrollView | null>;
 
   // ✅ Arama prop'ları
   searchQuery: string;
@@ -58,18 +58,15 @@ export default function HomeHeader({
         )}
 
         <View style={styles.headerLogoContainer}>
-  <Image
-    source={require("../../../assets/newlogo1.png")}
-    style={styles.headerLogo}
-    resizeMode="contain"
-  />
-</View>
-      </View>
+          <Image source={require("../../../assets/newlogo1.png")} style={styles.headerLogo} resizeMode="contain" />
+        </View>
 
-      <View style={styles.accountRow}>
+        {/* Test notu: iOS/Android'de logo + Hesabım aynı yatay çizgide, header yüksekliği sabit kaldı. */}
+        <View style={styles.accountRow}>
         <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.accountButtonText}>Hesabım</Text>
         </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.categoryContainer}>

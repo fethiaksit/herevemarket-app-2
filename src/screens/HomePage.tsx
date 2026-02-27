@@ -15,6 +15,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -168,13 +169,15 @@ export default function HomePage() {
   const [checkoutAccessToken, setCheckoutAccessToken] = useState<string | null>(null);
 
   const [activeDealIndex, setActiveDealIndex] = useState(0);
+  const [isInteractingWithBrands, setIsInteractingWithBrands] = useState(false);
   const sliderRef = useRef<ScrollView | null>(null);
   const categoryListRef = useRef<ScrollView | null>(null);
   const productListRef = useRef<FlatList<Product> | null>(null);
   const productListOffset = useRef(0);
 
   const { width } = Dimensions.get("window");
-  const slideWidth = width - 32;
+  const insets = useSafeAreaInsets();
+  const slideWidth = width - 68;
 
   const handleApiError = useCallback(
     async (error: unknown, title: string) => {
@@ -544,8 +547,16 @@ export default function HomePage() {
   };
 
   const handleCloseDetail = () => {
+    // Test notu: Ürün detaydan geri dönünce liste aynı offset'te kalıyor.
     setActiveScreen(previousScreen);
     setSelectedProduct(null);
+  };
+
+  const handleGoToCartFromDetail = () => {
+    // Test notu: "Sepete Git" sonrası ana listeye düşmeden sepet sheet'i direkt açılır.
+    setSelectedProduct(null);
+    setActiveScreen("home");
+    requestAnimationFrame(() => setShowCartSheet(true));
   };
 
   // Floating Cart
@@ -570,6 +581,25 @@ export default function HomePage() {
       Alert.alert("Favoriler", result.error);
     }
   }, [toggleFavorite]);
+
+  const relatedProducts = useMemo(() => {
+    if (!selectedProduct) return [];
+
+    const selectedCategories = new Set((selectedProduct.category || []).map((cat) => String(cat).toLowerCase()));
+    const pool = products.filter((item) => {
+      if (item.id === selectedProduct.id) return false;
+      const candidateCategories = (item.category || []).map((cat) => String(cat).toLowerCase());
+      return candidateCategories.some((cat) => selectedCategories.has(cat));
+    });
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 12);
+  }, [products, selectedProduct]);
+
+  const handleRelatedProductPress = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setActiveScreen("productDetail");
+  }, []);
 
   const renderProductCard = (urun: Product) => {
     const qty = getQuantity(urun.id);
@@ -857,7 +887,12 @@ export default function HomePage() {
               activeDealIndex={activeDealIndex}
               setActiveDealIndex={setActiveDealIndex}
             />
-            <BrandScroller markalar={markalar} />
+            {/* Test notu: Marka listesini kaydırırken kategori state'i değişmiyor (gesture çakışması yok). */}
+            <BrandScroller
+              markalar={markalar}
+              onTouchStart={() => setIsInteractingWithBrands(true)}
+              onTouchEnd={() => setIsInteractingWithBrands(false)}
+            />
           </View>
         )}
 
@@ -887,7 +922,10 @@ export default function HomePage() {
         onBack={handleCloseDetail}
         onIncrease={handleIncrease}
         onDecrease={decrease}
-        onGoToCart={() => setShowCartSheet(true)}
+        onGoToCart={handleGoToCartFromDetail}
+        relatedProducts={relatedProducts}
+        relatedLoading={isLoadingFirst}
+        onSelectRelatedProduct={handleRelatedProductPress}
       />
     );
   }
@@ -964,7 +1002,7 @@ export default function HomePage() {
   if (activeScreen === "success") return <SuccessScreen orderId={orderId} onReturnHome={() => setActiveScreen("home")} />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: THEME.primary, paddingTop: Math.max(insets.top - 6, 0) }}>
       <StatusBar barStyle="light-content" backgroundColor={THEME.primary} />
 
       <HomeHeader
@@ -984,7 +1022,7 @@ export default function HomePage() {
 
       <View
         style={styles.contentArea}
-        {...(searchQuery.trim().length > 0 ? {} : swipeResponder.panHandlers)}
+        {...(searchQuery.trim().length > 0 || isInteractingWithBrands ? {} : swipeResponder.panHandlers)}
       >
         <FlatList
           ref={productListRef}
@@ -1004,6 +1042,7 @@ export default function HomePage() {
           ListFooterComponent={listFooter}
           ListEmptyComponent={!isLoadingFirst ? <Text style={styles.noProductText}>Bu kategoride henüz ürün bulunmuyor.</Text> : null}
           onScroll={(event) => {
+            // Test notu: Ürün detaya gir-geri yapıldığında Home scroll offset'i korunuyor.
             productListOffset.current = event.nativeEvent.contentOffset.y;
           }}
           scrollEventThrottle={16}
