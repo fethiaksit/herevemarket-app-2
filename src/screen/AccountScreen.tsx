@@ -34,7 +34,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function AccountScreen() {
   const navigation = useNavigation<Navigation>();
-  const { token, logout, refreshUser } = useAuth();
+  const { token, isGuest, logout, refreshUser } = useAuth();
   const [profile, setProfile] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(Boolean(token));
   const [refreshing, setRefreshing] = useState(false);
@@ -104,13 +104,13 @@ export default function AccountScreen() {
   }, [navigation]);
 
   const handleEditProfilePress = useCallback(() => {
-    if (!token) {
-      setShowAuthGate(true);
+    if (!token || isGuest) {
+      Alert.alert("Giriş Gerekli", "Profil düzenlemek için giriş yapmalısınız.");
       return;
     }
 
     navigation.navigate(ROUTES.EDIT_PROFILE);
-  }, [navigation, token]);
+  }, [navigation, token, isGuest]);
 
   const handleAddressesPress = useCallback(() => {
     if (!token) {
