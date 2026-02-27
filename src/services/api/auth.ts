@@ -34,3 +34,33 @@ export async function getCurrentUser(accessToken?: string | null) {
     accessToken,
   });
 }
+
+export type UpdateProfileRequest = {
+  name: string;
+  phone: string;
+  email?: string;
+};
+
+export async function updateCurrentUserProfile(payload: UpdateProfileRequest, accessToken?: string | null) {
+  const endpoints = ["/user/me", "/user/profile", "/auth/me"];
+  let lastError: unknown;
+
+  for (const path of endpoints) {
+    try {
+      return await apiFetchAuthed<User>(path, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+        accessToken,
+      });
+    } catch (error) {
+      const status = typeof error === "object" && error !== null && "status" in error ? Number((error as { status?: number }).status) : 0;
+      if (status === 404 || status === 405) {
+        lastError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError ?? new Error("Profil güncelleme endpoint'i bulunamadı.");
+}
