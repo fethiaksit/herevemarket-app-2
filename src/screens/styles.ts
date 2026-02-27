@@ -3,8 +3,8 @@ import { THEME } from "../constants/theme";
 
 const { width: screenWidth } = Dimensions.get("window");
 const LOGO_ASPECT_RATIO = 180 / 42;
-const LOGO_TARGET_WIDTH = 180 * 6;
-const LOGO_MAX_WIDTH = screenWidth * 0.7;
+const LOGO_TARGET_WIDTH = 180 * 12;
+const LOGO_MAX_WIDTH = screenWidth * 0.9;
 const logoWidth = Math.min(LOGO_TARGET_WIDTH, LOGO_MAX_WIDTH);
 const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
 const LOGO_MAX_HEIGHT = 160;
@@ -24,14 +24,14 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     position: "relative",
   },
-headerLogoContainer: {
-  flex: 1,
-  alignItems: "flex-start",
-  justifyContent: "center",
-  maxWidth: "70%",
-  paddingRight: 10,
-  paddingTop: 0,
-},
+  headerLogoContainer: {
+    flex: 1,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    maxWidth: "70%",
+    paddingRight: 10,
+    paddingTop: 0,
+  },
   headerLogo: { width: "100%", maxWidth: logoWidth, height: resolvedLogoHeight, maxHeight: LOGO_MAX_HEIGHT },
   accountRow: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
   accountButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center" },
@@ -162,7 +162,7 @@ headerLogoContainer: {
   successText: { fontSize: 16, textAlign: 'center', color: THEME.textGray, marginBottom: 24 },
   successSubText: { fontSize: 14, textAlign: 'center', color: THEME.textLight, marginBottom: 40 },
   floatingCart: { position: 'absolute', right: 0, left: 0 },
-  floatingBtnInner: { flexDirection: 'row', backgroundColor: THEME.secondary, marginHorizontal: 16, borderRadius: 16, padding: 12, alignItems: 'center', justifyContent: 'space-between', elevation: 10, shadowColor: THEME.secondary, shadowOffset: {width:0, height:4}, shadowOpacity: 0.5 },
+  floatingBtnInner: { flexDirection: 'row', backgroundColor: THEME.secondary, marginHorizontal: 16, borderRadius: 16, padding: 12, alignItems: 'center', justifyContent: 'space-between', elevation: 10, shadowColor: THEME.secondary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5 },
   cartIconWrapper: { flexDirection: 'row', alignItems: 'center' },
   badge: { backgroundColor: THEME.white, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 },
   badgeText: { color: THEME.primary, fontWeight: 'bold', fontSize: 12 },
