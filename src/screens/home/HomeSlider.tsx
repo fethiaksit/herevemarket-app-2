@@ -5,31 +5,43 @@ import { styles } from "../styles";
 export default function HomeSlider({
   dailyDeals,
   sliderRef,
-  slideWidth,
+  itemWidth,
+  sidePeek,
+  gap,
+  snapInterval,
   activeDealIndex,
   setActiveDealIndex,
+  onUserInteraction,
 }: {
   dailyDeals: number[];
   sliderRef: React.RefObject<ScrollView | null>;
-  slideWidth: number;
+  itemWidth: number;
+  sidePeek: number;
+  gap: number;
+  snapInterval: number;
   activeDealIndex: number;
   setActiveDealIndex: (value: number) => void;
+  onUserInteraction: () => void;
 }) {
   return (
     <View style={styles.sliderContainer}>
-      {/* Test notu: Slider'da merkez kart büyük, yan kartlar 8-12px boşlukla görünür ve autoplay devam eder. */}
       <ScrollView
         ref={sliderRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={slideWidth}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
         decelerationRate="fast"
         disableIntervalMomentum
-        contentContainerStyle={styles.sliderTrack}
-        onMomentumScrollEnd={(e) => setActiveDealIndex(Math.round(e.nativeEvent.contentOffset.x / slideWidth))}
+        contentContainerStyle={[styles.sliderTrack, { paddingHorizontal: sidePeek }]}
+        onScrollBeginDrag={onUserInteraction}
+        onMomentumScrollEnd={(e) => {
+          const offsetX = e.nativeEvent.contentOffset.x;
+          setActiveDealIndex(Math.round(offsetX / snapInterval));
+        }}
       >
         {dailyDeals.map((img, i) => (
-          <View key={i} style={[styles.slideItem, styles.slideGap, { width: slideWidth - 10 }]}>
+          <View key={i} style={[styles.slideItem, { width: itemWidth, marginRight: i === dailyDeals.length - 1 ? 0 : gap }]}>
             <View style={styles.slideCard}>
               <Image source={img} style={styles.slideImage} resizeMode="cover" />
             </View>
