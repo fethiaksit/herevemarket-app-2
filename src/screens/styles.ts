@@ -3,21 +3,23 @@ import { THEME } from "../constants/theme";
 
 const { width: screenWidth } = Dimensions.get("window");
 const LOGO_ASPECT_RATIO = 180 / 42;
-const LOGO_TARGET_WIDTH = 180 * 3;
-const LOGO_MAX_WIDTH = screenWidth * 0.6;
+const LOGO_TARGET_WIDTH = 180 * 6;
+const LOGO_MAX_WIDTH = screenWidth * 0.7;
 const logoWidth = Math.min(LOGO_TARGET_WIDTH, LOGO_MAX_WIDTH);
 const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
-const headerVerticalPadding = 10;
+const LOGO_MAX_HEIGHT = 160;
+const resolvedLogoHeight = Math.min(logoHeight, LOGO_MAX_HEIGHT);
+const headerVerticalPadding = 12;
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: THEME.background },
   scrollContent: { padding: 16, paddingBottom: 100 },
-  mainHeader: { backgroundColor: THEME.primary, paddingBottom: 10 },
+  mainHeader: { backgroundColor: THEME.primary, paddingBottom: 12 },
   logoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: logoHeight + headerVerticalPadding * 2,
+    minHeight: resolvedLogoHeight + headerVerticalPadding * 2,
     paddingVertical: headerVerticalPadding,
     paddingHorizontal: 16,
     position: "relative",
@@ -26,13 +28,14 @@ headerLogoContainer: {
   flex: 1,
   alignItems: "flex-start",
   justifyContent: "center",
-  maxWidth: "60%",
+  maxWidth: "70%",
+  paddingRight: 10,
   paddingTop: 0,
 },
-  headerLogo: { width: "100%", maxWidth: logoWidth, height: logoHeight, maxHeight: 126 },
+  headerLogo: { width: "100%", maxWidth: logoWidth, height: resolvedLogoHeight, maxHeight: LOGO_MAX_HEIGHT },
   accountRow: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
-  accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 14 },
+  accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 17, paddingVertical: 10, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 16 },
   headerBar: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: THEME.white, borderBottomWidth: 1, borderColor: THEME.borderColor },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark },
   headerCenterAbsolute: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
