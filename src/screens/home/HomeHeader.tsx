@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   TextInput,
+  LayoutChangeEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { THEME } from "../../constants/theme";
@@ -38,6 +39,25 @@ export default function HomeHeader({
 }) {
   // ✅ Hook component içinde olmalı
   const inputRef = useRef<TextInput>(null);
+  const categoryScrollRef = useRef<ScrollView>(null);
+  const categoryPositions = useRef<Record<string, { x: number; width: number }>>({});
+
+  const handleCategoryLayout = (categoryId: string, event: LayoutChangeEvent) => {
+    categoryPositions.current[categoryId] = {
+      x: event.nativeEvent.layout.x,
+      width: event.nativeEvent.layout.width,
+    };
+  };
+
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+
+    const selectedLayout = categoryPositions.current[selectedCategoryId];
+    if (!selectedLayout) return;
+
+    const targetX = Math.max(selectedLayout.x - 16, 0);
+    categoryScrollRef.current?.scrollTo({ x: targetX, animated: true });
+  }, [selectedCategoryId]);
 
   return (
     <View style={styles.mainHeader}>
@@ -74,6 +94,7 @@ export default function HomeHeader({
 
       <View style={styles.categoryContainer}>
         <ScrollView
+          ref={categoryScrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryPillList}
@@ -86,6 +107,7 @@ export default function HomeHeader({
                 styles.categoryPill,
                 selectedCategoryId === cat.id && styles.categoryPillActive,
               ]}
+              onLayout={(event) => handleCategoryLayout(String(cat.id), event)}
               onPress={() => {
                 setSelectedCategoryId(cat.id);
 
