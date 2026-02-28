@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
   },
   categoryPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   categoryPillActive: { backgroundColor: THEME.secondary, borderColor: THEME.secondaryDark },

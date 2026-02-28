@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  ScrollView,
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -72,7 +73,12 @@ export default function HomeHeader({
       </View>
 
       <View style={styles.categoryContainer}>
-        <View style={styles.categoryPillList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryPillList}
+          keyboardShouldPersistTaps="handled"
+        >
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
@@ -96,7 +102,7 @@ export default function HomeHeader({
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         {/* ✅ ARAMA BAR (basınca klavye kesin açılsın) */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
