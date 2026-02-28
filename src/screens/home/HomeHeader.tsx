@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  ScrollView,
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,7 +19,6 @@ export default function HomeHeader({
   selectedCategoryId,
   setSelectedCategoryId,
   handleAccountPress,
-  categoryListRef,
 
   // ✅ Arama prop'ları
   searchQuery,
@@ -32,7 +30,6 @@ export default function HomeHeader({
   selectedCategoryId: string | null;
   setSelectedCategoryId: React.Dispatch<React.SetStateAction<string | null>>;
   handleAccountPress: () => void;
-  categoryListRef: React.RefObject<ScrollView | null>;
 
   // ✅ Arama prop'ları
   searchQuery: string;
@@ -75,13 +72,7 @@ export default function HomeHeader({
       </View>
 
       <View style={styles.categoryContainer}>
-        <ScrollView
-          ref={categoryListRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        <View style={styles.categoryPillList}>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
@@ -91,9 +82,6 @@ export default function HomeHeader({
               ]}
               onPress={() => {
                 setSelectedCategoryId(cat.id);
-
-                // Kategori seçilince aramayı temizlemek istersen:
-                // setSearchQuery("");
 
                 if (!isCategoryScreen) setActiveScreen("category");
               }}
@@ -108,7 +96,7 @@ export default function HomeHeader({
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
 
         {/* ✅ ARAMA BAR (basınca klavye kesin açılsın) */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>

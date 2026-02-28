@@ -172,7 +172,6 @@ export default function HomePage() {
   const [isInteractingWithBrands, setIsInteractingWithBrands] = useState(false);
   const sliderRef = useRef<ScrollView | null>(null);
   const sliderAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const categoryListRef = useRef<ScrollView | null>(null);
   const productListRef = useRef<FlatList<Product> | null>(null);
   const productListOffset = useRef(0);
 
@@ -457,37 +456,6 @@ export default function HomePage() {
   }, [searchQuery, displayProductsBase, products, categories]);
 
   const pageTitle = isCategoryScreen ? (selectedCategory?.name || "Ürünler") : "Kampanyalı Fırsatlar";
-
-  // Swipe (arama varken swipe input'a dokunmayı çalmasın)
-  const swipeResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-        onPanResponderEnd: (_, gestureState) => {
-          const { dx } = gestureState;
-          if (Math.abs(dx) > 50) {
-            const currentIndex = categories.findIndex((c) => String(c.id) === String(selectedCategoryId));
-            if (currentIndex < 0) return;
-
-            if (dx > 0 && currentIndex > 0) {
-              const prevCat = categories[currentIndex - 1];
-              setSelectedCategoryId(String(prevCat.id));
-              setSearchQuery("");
-              if (!isCategoryScreen) setActiveScreen("category");
-              categoryListRef.current?.scrollTo({ x: (currentIndex - 1) * 100, animated: true });
-            } else if (dx < 0 && currentIndex < categories.length - 1) {
-              const nextCat = categories[currentIndex + 1];
-              setSelectedCategoryId(String(nextCat.id));
-              setSearchQuery("");
-              if (!isCategoryScreen) setActiveScreen("category");
-              categoryListRef.current?.scrollTo({ x: (currentIndex + 1) * 100, animated: true });
-            }
-          }
-        },
-      }),
-    [categories, selectedCategoryId, isCategoryScreen]
-  );
 
   useEffect(() => {
     if (activeScreen === "home" || activeScreen === "category") {
@@ -1047,15 +1015,11 @@ export default function HomePage() {
           setSearchQuery("");
         }}
         handleAccountPress={handleAccountPress}
-        categoryListRef={categoryListRef}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
 
-      <View
-        style={styles.contentArea}
-        {...(searchQuery.trim().length > 0 || isInteractingWithBrands ? {} : swipeResponder.panHandlers)}
-      >
+      <View style={styles.contentArea}>
         <FlatList
           ref={productListRef}
           data={displayProducts}
