@@ -410,6 +410,39 @@ export default function HomePage() {
     [categories, selectedCategoryId]
   );
 
+  const handleCategorySwipe = useCallback((direction: "next" | "prev") => {
+    if (activeScreen !== "category" || !selectedCategoryId || categories.length === 0) return;
+
+    const currentIndex = categories.findIndex((c) => String(c.id) === String(selectedCategoryId));
+    if (currentIndex < 0) return;
+
+    const nextIndex = direction === "next"
+      ? Math.min(currentIndex + 1, categories.length - 1)
+      : Math.max(currentIndex - 1, 0);
+
+    if (nextIndex === currentIndex) return;
+    setSelectedCategoryId(categories[nextIndex]?.id ?? null);
+    setSearchQuery("");
+    productListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [activeScreen, categories, selectedCategoryId]);
+
+  const categorySwipeResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          if (activeScreen !== "category") return false;
+          const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          return isHorizontalSwipe && Math.abs(gestureState.dx) > 18;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (activeScreen !== "category") return;
+          if (gestureState.dx <= -40) handleCategorySwipe("next");
+          if (gestureState.dx >= 40) handleCategorySwipe("prev");
+        },
+      }),
+    [activeScreen, handleCategorySwipe]
+  );
+
   const campaignProducts = useMemo(
     () => products.filter((product) => product.isCampaign && product.inStock && product.stock > 0),
     [products]
@@ -1019,7 +1052,7 @@ export default function HomePage() {
         setSearchQuery={setSearchQuery}
       />
 
-      <View style={styles.contentArea}>
+      <View style={styles.contentArea} {...categorySwipeResponder.panHandlers}>
         <FlatList
           ref={productListRef}
           data={displayProducts}
