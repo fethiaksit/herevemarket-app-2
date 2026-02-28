@@ -589,6 +589,12 @@ export default function HomePage() {
     requestAnimationFrame(() => setShowCartSheet(true));
   };
 
+  const handleGoHomeFromDetail = () => {
+    setSelectedProduct(null);
+    setActiveScreen("home");
+    navigation.navigate(ROUTES.HOME);
+  };
+
   // Floating Cart
   const pan = useRef(new Animated.ValueXY({ x: 16, y: Dimensions.get("window").height - 120 })).current;
   const panResponder = useRef(
@@ -953,6 +959,7 @@ export default function HomePage() {
         isFavorite={isFavorite(selectedProduct.id)}
         onToggleFavorite={() => handleFavoriteToggle(selectedProduct)}
         onBack={handleCloseDetail}
+        onGoHome={handleGoHomeFromDetail}
         onIncrease={handleIncrease}
         onDecrease={decrease}
         onGoToCart={handleGoToCartFromDetail}

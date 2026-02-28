@@ -21,6 +21,7 @@ type Props = {
   quantity?: number;
   isFavorite?: boolean;
   onBack: () => void;
+  onGoHome?: () => void;
   onIncrease?: (id: string) => void;
   onDecrease?: (id: string) => void;
   onGoToCart?: () => void;
@@ -46,6 +47,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
   quantity = 0,
   isFavorite = false,
   onBack,
+  onGoHome = onBack,
   onIncrease = () => undefined,
   onDecrease = () => undefined,
   onGoToCart = () => undefined,
@@ -80,7 +82,16 @@ export const ProductDetailScreen: React.FC<Props> = ({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <AppHeader title="Ürün Detayı" onBack={onBack} />
+      <AppHeader
+        title="Ürün Detayı"
+        showBack={false}
+        leftContent={(
+          <TouchableOpacity style={styles.homeButton} onPress={onGoHome} activeOpacity={0.85}>
+            <Ionicons name="home-outline" size={18} color={THEME.primary} />
+            <Text style={styles.homeButtonText}>Anasayfa</Text>
+          </TouchableOpacity>
+        )}
+      />
       <View style={styles.headerActions}>
         <TouchableOpacity style={styles.favoriteHeaderBtn} onPress={onToggleFavorite}>
           <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={isFavorite ? THEME.danger : "#6B7280"} />
@@ -171,6 +182,22 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingBottom: 100 },
   headerActions: { alignItems: "flex-end", paddingHorizontal: 16, paddingTop: 8, backgroundColor: THEME.white },
+  homeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D7E3F9",
+    backgroundColor: "#F3F7FF",
+    gap: 4,
+  },
+  homeButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME.primary,
+  },
   favoriteHeaderBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   imageContainer: { backgroundColor: THEME.white, height: 300, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   image: { width: "80%", height: "80%" },
