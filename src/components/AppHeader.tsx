@@ -8,9 +8,10 @@ type AppHeaderProps = {
   title: string;
   showBack?: boolean;
   onBack?: () => void;
+  leftContent?: React.ReactNode;
 };
 
-export default function AppHeader({ title, showBack = true, onBack }: AppHeaderProps) {
+export default function AppHeader({ title, showBack = true, onBack, leftContent }: AppHeaderProps) {
   const navigation = useNavigation<any>();
 
   const handleBack = () => {
@@ -25,7 +26,9 @@ export default function AppHeader({ title, showBack = true, onBack }: AppHeaderP
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
       <View style={styles.row}>
-        {showBack ? (
+        {leftContent ? (
+          <View style={styles.leftContentWrap}>{leftContent}</View>
+        ) : showBack ? (
           <TouchableOpacity style={styles.backButton} onPress={handleBack} hitSlop={8}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
@@ -57,6 +60,9 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: 8,
+  },
+  leftContentWrap: {
     marginRight: 8,
   },
   backPlaceholder: {
