@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, FlatList, SafeAreaView, StyleSheet, TextInput, View } from "react-native";
 import { Header } from "./components/Header";
 import { Cart } from "./components/Cart";
@@ -29,8 +29,6 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const listRef = useRef<FlatList<Product>>(null);
-  const hasUserScrolledRef = useRef(false);
-  const isTransitioningRef = useRef(false);
 
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -45,8 +43,6 @@ export default function App() {
       return [...prev, { ...product, quantity: 1 }];
     });
   };
-<Text style={{ padding: 10 }}>TEST-{Date.now()}</Text>
-
   const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
       setCartItems((prev) => prev.filter((i) => i.id !== id));
@@ -64,8 +60,12 @@ export default function App() {
 
   const getQty = (id: string) => cartItems.find((i) => i.id === id)?.quantity || 0;
 
-  const selectCategory = (categoryId: string) => {
+  const selectCategory = (categoryId: string, options?: { disableAutoScroll?: boolean }) => {
     setSelectedCategoryId(categoryId);
+
+    if (!options?.disableAutoScroll) {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }
   };
 
   const handleProductPress = useCallback((product: Product) => {
@@ -84,7 +84,6 @@ export default function App() {
     setActiveScreen(HOME_SCREEN);
   }, []);
 
-  const categoryRotation = useMemo(() => categories.map((c) => c.id), []);
   const categoryNameById = useMemo(() => {
     return categories.reduce<Record<string, string>>((acc, category) => {
       acc[category.id] = category.name.toLowerCase();
@@ -99,27 +98,6 @@ export default function App() {
       return acc;
     }, {});
   }, []);
-
-  const getNextCategoryId = useCallback(() => {
-    if (selectedCategoryId === HOME_CATEGORY_ID) {
-      return categoryRotation[0] || HOME_CATEGORY_ID;
-    }
-
-    if (!categoryRotation.length) return HOME_CATEGORY_ID;
-
-    const currentIndex = categoryRotation.indexOf(selectedCategoryId);
-    const safeIndex = currentIndex === -1 ? 0 : currentIndex;
-    const nextIndex = (safeIndex + 1) % categoryRotation.length;
-    return categoryRotation[nextIndex];
-  }, [categoryRotation, selectedCategoryId]);
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollToOffset({ offset: 0, animated: false });
-    }
-    hasUserScrolledRef.current = false;
-    isTransitioningRef.current = false;
-  }, [selectedCategoryId]);
 
   const isHome = selectedCategoryId === HOME_CATEGORY_ID;
   const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -138,18 +116,7 @@ export default function App() {
   }, [categoryNameById, isHome, normalizedQuery, productsByCategory, selectedCategoryId]);
 
   const handleEndReached = useCallback(() => {
-    if (isSearching || !hasUserScrolledRef.current || isTransitioningRef.current) return;
-
-    const nextCategory = getNextCategoryId();
-    if (nextCategory !== selectedCategoryId) {
-      isTransitioningRef.current = true;
-      setSelectedCategoryId(nextCategory);
-    }
-    hasUserScrolledRef.current = false;
-  }, [getNextCategoryId, isSearching, selectedCategoryId]);
-
-  const handleScrollBegin = useCallback(() => {
-    hasUserScrolledRef.current = true;
+    // Kategori değişimi artık yalnızca kategori tıklamasından tetiklenir.
   }, []);
 
   const isDetailScreen = activeScreen === DETAIL_SCREEN && selectedProduct !== null;
@@ -189,7 +156,7 @@ export default function App() {
               <CategorySelector
                 categories={categories}
                 selectedCategoryId={selectedCategoryId}
-                onSelect={selectCategory}
+                onSelect={(categoryId) => selectCategory(categoryId, { disableAutoScroll: isHome })}
                 homeOptionLabel="Anasayfa"
                 homeCategoryId={HOME_CATEGORY_ID}
               />
@@ -206,7 +173,6 @@ export default function App() {
                 onProductPress={handleProductPress}
                 listRef={listRef}
                 onEndReached={handleEndReached}
-                onScrollBegin={handleScrollBegin}
               />
             </View>
           </>
