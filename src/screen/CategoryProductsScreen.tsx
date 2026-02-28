@@ -13,6 +13,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../utils/cartPrice";
 import { buildImageUrl } from "../utils/buildImageUrl";
@@ -55,9 +56,9 @@ export default function CategoryProductsScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.cartBackButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("Home")}
           >
-            <Text style={styles.cartBackText}>←</Text>
+            <Ionicons name="home-outline" size={18} color="#082A5F" />
           </TouchableOpacity>
           <Text style={styles.sectionTitle}>{categoryName}</Text>
         </View>
