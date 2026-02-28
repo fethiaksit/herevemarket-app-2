@@ -42,6 +42,12 @@ export const styles = StyleSheet.create({
   headerBackText: { fontSize: 24, color: THEME.primary },
   contentArea: { flex: 1, backgroundColor: THEME.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -15, overflow: 'hidden' },
   categoryContainer: { marginTop: 5 },
+  categoryPillList: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   categoryPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   categoryPillActive: { backgroundColor: THEME.secondary, borderColor: THEME.secondaryDark },
   categoryPillText: { color: THEME.white, fontWeight: '600' },
